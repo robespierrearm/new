@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase, Tender, TenderInsert, STATUS_LABELS } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,13 +20,25 @@ import { Pencil, Trash2 } from 'lucide-react';
 type TabType = 'all' | 'new' | 'review' | 'inwork' | 'archive';
 type ArchiveFilter = 'all' | 'completed' | 'lost';
 
-export default function TendersPage() {
+function TendersContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabType | null;
+  
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingTender, setEditingTender] = useState<Tender | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [activeTab, setActiveTab] = useState<TabType>(tabParam || 'all');
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>('all');
+
+  // Обновляем activeTab при изменении URL
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab('all');
+    }
+  }, [tabParam]);
 
   // Загрузка тендеров
   const loadTenders = async () => {
@@ -232,67 +245,11 @@ export default function TendersPage() {
         </Button>
       </div>
 
-      {/* Табы */}
-      <div className="mb-6 bg-white rounded-lg border shadow-sm overflow-hidden">
-        <div className="flex flex-wrap border-b">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'all'
-                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Все тендеры <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">{counts.all}</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('new')}
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'new'
-                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Новые <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{counts.new}</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('review')}
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'review'
-                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            На рассмотрении <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{counts.review}</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('inwork')}
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'inwork'
-                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            В работе <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{counts.inwork}</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('archive');
-              setArchiveFilter('all');
-            }}
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'archive'
-                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Архив <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">{counts.archive}</span>
-          </button>
-        </div>
-
-        {/* Фильтры архива */}
-        {activeTab === 'archive' && (
-          <div className="p-4 bg-gray-50 border-b flex gap-3">
+      {/* Фильтры архива (только если активен таб Архив) */}
+      {activeTab === 'archive' && (
+        <div className="mb-6 bg-white rounded-lg border shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Фильтр архива:</h3>
+          <div className="flex gap-3">
             <button
               onClick={() => setArchiveFilter('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -324,8 +281,8 @@ export default function TendersPage() {
               ✕ Проигрыш
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -437,5 +394,19 @@ export default function TendersPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function TendersPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    }>
+      <TendersContent />
+    </Suspense>
   );
 }

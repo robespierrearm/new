@@ -14,6 +14,8 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -51,9 +53,11 @@ export function AppSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTendersOpen, setIsTendersOpen] = useState(true); // Выпадающее меню тендеров
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleTenders = () => setIsTendersOpen(!isTendersOpen);
 
   return (
     <>
@@ -125,11 +129,110 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href === '/tenders' && pathname.startsWith('/tenders'));
+          const isTendersItem = item.href === '/tenders';
 
+          // Если это пункт "Тендеры" - делаем выпадающее меню
+          if (isTendersItem) {
+            return (
+              <div key={item.href} className="space-y-1">
+                {/* Основная кнопка Тендеры */}
+                <button
+                  onClick={toggleTenders}
+                  className={cn(
+                    'w-full gap-3 transition-all flex items-center rounded-md text-sm font-medium h-9 px-4',
+                    isActive 
+                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
+                      : 'hover:bg-secondary/80 text-gray-700',
+                    isCollapsed && 'justify-center px-2'
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {!isCollapsed && (
+                    <>
+                      <span className="truncate flex-1 text-left">{item.title}</span>
+                      {isTendersOpen ? (
+                        <ChevronDown className="h-4 w-4 shrink-0" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 shrink-0" />
+                      )}
+                    </>
+                  )}
+                </button>
+
+                {/* Подменю тендеров */}
+                {isTendersOpen && !isCollapsed && (
+                  <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-3">
+                    <Link href="/tenders" onClick={closeMobileMenu}>
+                      <button
+                        className={cn(
+                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
+                          pathname === '/tenders' && !pathname.includes('?')
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        Все тендеры
+                      </button>
+                    </Link>
+                    <Link href="/tenders?tab=new" onClick={closeMobileMenu}>
+                      <button
+                        className={cn(
+                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
+                          pathname.includes('tab=new')
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        Новые
+                      </button>
+                    </Link>
+                    <Link href="/tenders?tab=review" onClick={closeMobileMenu}>
+                      <button
+                        className={cn(
+                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
+                          pathname.includes('tab=review')
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        На рассмотрении
+                      </button>
+                    </Link>
+                    <Link href="/tenders?tab=inwork" onClick={closeMobileMenu}>
+                      <button
+                        className={cn(
+                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
+                          pathname.includes('tab=inwork')
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        В работе
+                      </button>
+                    </Link>
+                    <Link href="/tenders?tab=archive" onClick={closeMobileMenu}>
+                      <button
+                        className={cn(
+                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
+                          pathname.includes('tab=archive')
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        Архив
+                      </button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Обычные пункты меню
           return (
             <Link key={item.href} href={item.href} onClick={closeMobileMenu}>
               <Button
