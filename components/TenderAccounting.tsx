@@ -135,21 +135,19 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
         <div className="border-t bg-gray-50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
           {/* Детальные расчёты */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-semibold text-gray-900 mb-3">Доходы</h4>
+            <div className="bg-white p-4 rounded-lg border col-span-2">
+              <h4 className="font-semibold text-gray-900 mb-3">📊 Финансовая сводка</h4>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Цена победы:</span>
+                  <span className="text-gray-600">Доход из контракта:</span>
                   <span className="font-medium text-green-600">{formatAmount(income)}</span>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-semibold text-gray-900 mb-3">Итоги</h4>
-              <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Валовая прибыль:</span>
+                  <span className="text-gray-600">Расходы:</span>
+                  <span className="font-medium text-red-600">{formatAmount(totalExpenses)}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t">
+                  <span className="text-gray-600">Прибыль:</span>
                   <span className={cn(
                     "font-medium",
                     profit > 0 ? "text-green-600" : profit < 0 ? "text-red-600" : "text-gray-600"
@@ -158,10 +156,10 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Налог (7%):</span>
+                  <span className="text-gray-600">Налог УСН (7%):</span>
                   <span className="font-medium text-orange-600">{formatAmount(tax)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t">
+                <div className="flex justify-between pt-2 border-t border-gray-300">
                   <span className="font-semibold text-gray-900">Чистая прибыль:</span>
                   <span className={cn(
                     "font-bold text-lg",
