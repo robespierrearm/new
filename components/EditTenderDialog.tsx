@@ -135,22 +135,15 @@ export function EditTenderDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="edit-status">Статус</Label>
-                <select
-                  id="edit-status"
-                  value={formData.status}
+                <Label htmlFor="edit-submission_deadline">Дедлайн подачи</Label>
+                <Input
+                  id="edit-submission_deadline"
+                  type="date"
+                  value={formData.submission_deadline || ''}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as 'черновик' | 'подано' | 'победа',
-                    })
+                    setFormData({ ...formData, submission_deadline: e.target.value })
                   }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="черновик">Черновик</option>
-                  <option value="подано">Подано</option>
-                  <option value="победа">Победа</option>
-                </select>
+                />
               </div>
             </div>
 
