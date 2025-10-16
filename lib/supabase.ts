@@ -20,3 +20,17 @@ export interface Tender {
 
 export type TenderInsert = Omit<Tender, 'id' | 'created_at'>;
 export type TenderUpdate = Partial<TenderInsert>;
+
+export interface Supplier {
+  id: number;
+  name: string;
+  contact_person: string | null;
+  phone: string | null;
+  email: string | null;
+  category: string | null;
+  notes: string | null;
+  created_at?: string;
+}
+
+export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
+export type SupplierUpdate = Partial<SupplierInsert>;
