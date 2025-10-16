@@ -138,7 +138,9 @@ export function AppSidebar() {
 
           // Если это пункт "Тендеры" - делаем выпадающее меню
           if (isTendersItem) {
-            const isAllTenders = pathname === '/tenders' && !searchParams.get('tab');
+            const tabParam = searchParams.get('tab');
+            const isAllTenders = pathname === '/tenders' && !tabParam;
+            const hasActiveSubtab = pathname === '/tenders' && tabParam;
             
             return (
               <div key={item.href} className="space-y-1">
@@ -150,8 +152,8 @@ export function AppSidebar() {
                         'w-full gap-3 transition-all flex items-center rounded-md text-sm font-medium h-9 px-4',
                         isAllTenders
                           ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
-                          : isActive
-                          ? 'bg-blue-50 text-blue-700'
+                          : hasActiveSubtab
+                          ? 'bg-gray-100 text-gray-700'
                           : 'hover:bg-secondary/80 text-gray-700',
                         isCollapsed && 'justify-center px-2'
                       )}

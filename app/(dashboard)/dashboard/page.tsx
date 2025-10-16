@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Users, TrendingUp } from 'lucide-react';
+import { FileText, Users, TrendingUp, Calendar, Clock } from 'lucide-react';
 
 // Статичные данные для демонстрации
 const stats = [
@@ -81,14 +82,57 @@ const getStatusColor = (status: string) => {
 };
 
 export default function DashboardPage() {
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      weekday: 'long'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Общая информация</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
-          Обзор ключевых показателей вашего бизнеса
-        </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Общая информация</h1>
+            <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+              Обзор ключевых показателей вашего бизнеса
+            </p>
+          </div>
+          
+          {/* Дата и время */}
+          <div className="flex flex-col gap-2 bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-3 rounded-lg border border-blue-100 shadow-sm">
+            <div className="flex items-center gap-2 text-gray-700">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium">{formatDate(currentDateTime)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Clock className="h-4 w-4 text-purple-600" />
+              <span className="text-lg font-bold tabular-nums">{formatTime(currentDateTime)}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
