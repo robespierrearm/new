@@ -28,11 +28,12 @@ export function AddTenderDialog({
   const [formData, setFormData] = useState<TenderInsert>({
     name: '',
     link: '',
-    publication_date: new Date().toISOString().split('T')[0],
+    publication_date: '',
     submission_date: '',
+    submission_deadline: '',
     start_price: null,
     win_price: null,
-    status: 'черновик',
+    status: 'новый',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,9 +52,10 @@ export function AddTenderDialog({
       link: '',
       publication_date: new Date().toISOString().split('T')[0],
       submission_date: '',
+      submission_deadline: '',
       start_price: null,
       win_price: null,
-      status: 'черновик',
+      status: 'новый',
     });
   };
 
@@ -148,22 +150,15 @@ export function AddTenderDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="status">Статус</Label>
-                <select
-                  id="status"
-                  value={formData.status}
+                <Label htmlFor="submission_deadline">Дедлайн подачи *</Label>
+                <Input
+                  id="submission_deadline"
+                  type="date"
+                  value={formData.submission_deadline || ''}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as 'черновик' | 'подано' | 'победа',
-                    })
+                    setFormData({ ...formData, submission_deadline: e.target.value })
                   }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="черновик">Черновик</option>
-                  <option value="подано">Подано</option>
-                  <option value="победа">Победа</option>
-                </select>
+                />
               </div>
             </div>
 

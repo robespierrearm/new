@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase, Tender, TenderInsert } from '@/lib/supabase';
+import { supabase, Tender, TenderInsert, STATUS_LABELS } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { AddTenderDialog } from '@/components/AddTenderDialog';
 import { EditTenderDialog } from '@/components/EditTenderDialog';
+import { TenderStatusChanger } from '@/components/TenderStatusChanger';
 import { Pencil, Trash2 } from 'lucide-react';
 
 export default function TendersPage() {
@@ -86,6 +87,30 @@ export default function TendersPage() {
     }
   };
 
+  // Смена статуса тендера
+  const handleStatusChange = async (
+    tenderId: number,
+    newStatus: Tender['status'],
+    additionalData?: Partial<Tender>
+  ) => {
+    const updateData: Partial<Tender> = {
+      status: newStatus,
+      ...additionalData,
+    };
+
+    const { error } = await supabase
+      .from('tenders')
+      .update(updateData)
+      .eq('id', tenderId);
+
+    if (error) {
+      console.error('Ошибка смены статуса:', error);
+      throw error;
+    } else {
+      loadTenders();
+    }
+  };
+
   // Форматирование даты
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—';
@@ -103,14 +128,22 @@ export default function TendersPage() {
   };
 
   // Цвет статуса
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Tender['status']) => {
     switch (status) {
-      case 'черновик':
+      case 'новый':
         return 'bg-gray-100 text-gray-800';
       case 'подано':
         return 'bg-blue-100 text-blue-800';
+      case 'на рассмотрении':
+        return 'bg-purple-100 text-purple-800';
       case 'победа':
         return 'bg-green-100 text-green-800';
+      case 'в работе':
+        return 'bg-orange-100 text-orange-800';
+      case 'завершён':
+        return 'bg-teal-100 text-teal-800';
+      case 'проигрыш':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -151,49 +184,52 @@ export default function TendersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Название тендера</TableHead>
-                <TableHead>Ссылка</TableHead>
                 <TableHead>Дата публикации</TableHead>
                 <TableHead>Дата подачи</TableHead>
                 <TableHead>Начальная цена</TableHead>
                 <TableHead>Цена победы</TableHead>
                 <TableHead>Статус</TableHead>
+                <TableHead>Смена статуса</TableHead>
                 <TableHead className="text-right">Действия</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tenders.map((tender) => (
-                <TableRow key={tender.id}>
-                  <TableCell className="font-medium">{tender.name}</TableCell>
-                  <TableCell>
-                    {tender.link ? (
-                      <a
-                        href={tender.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Открыть
-                      </a>
-                    ) : (
-                      '—'
-                    )}
+                <TableRow key={tender.id} className="hover:bg-gray-50 transition-colors">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {tender.name}
+                      {tender.link && (
+                        <a
+                          href={tender.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Открыть ссылку"
+                        >
+                          🔗
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{formatDate(tender.publication_date)}</TableCell>
                   <TableCell>{formatDate(tender.submission_date)}</TableCell>
                   <TableCell>{formatPrice(tender.start_price)}</TableCell>
-                  <TableCell>
-                    {tender.status === 'победа'
-                      ? formatPrice(tender.win_price)
-                      : '—'}
-                  </TableCell>
+                  <TableCell>{formatPrice(tender.win_price)}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                         tender.status
                       )}`}
                     >
-                      {tender.status}
+                      {STATUS_LABELS[tender.status]}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <TenderStatusChanger
+                      tender={tender}
+                      onStatusChange={handleStatusChange}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
