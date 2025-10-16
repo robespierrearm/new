@@ -83,31 +83,43 @@ export function AppSidebar() {
         )}
       >
       {/* Logo */}
-      <div className="flex h-16 items-center border-b bg-gradient-to-r from-blue-600 to-purple-600 relative overflow-hidden">
+      <div className="flex h-20 items-center border-b bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 relative overflow-hidden shadow-lg">
+        {/* Декоративный фон */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNnpNNiAzNGMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTZ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        
         <Link
           href="/dashboard"
-          className="flex-1 flex items-center px-4 py-3 hover:bg-white/10 transition-all duration-200"
+          className="flex-1 flex items-center px-5 py-4 hover:bg-white/10 transition-all duration-300 relative z-10 group"
           onClick={closeMobileMenu}
         >
           {!isCollapsed ? (
-            <h1 className="text-xl font-bold text-white drop-shadow-sm">
-              TenderCRM
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <span className="text-2xl font-black text-white">T</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white drop-shadow-lg tracking-tight">
+                  TenderCRM
+                </h1>
+                <p className="text-xs text-white/70">Управление тендерами</p>
+              </div>
+            </div>
           ) : (
-            <div className="text-2xl font-bold text-white drop-shadow-sm">
-              TC
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              <span className="text-2xl font-black text-white">T</span>
             </div>
           )}
         </Link>
+        
         <button
           onClick={toggleCollapse}
-          className="hidden md:flex items-center justify-center w-12 h-full hover:bg-white/10 transition-all duration-200 border-l border-white/20"
+          className="hidden md:flex items-center justify-center w-14 h-full hover:bg-white/10 transition-all duration-300 border-l border-white/20 relative z-10 group"
           title={isCollapsed ? "Развернуть меню" : "Свернуть меню"}
         >
           {isCollapsed ? (
-            <PanelLeftOpen className="h-5 w-5 text-white" />
+            <PanelLeftOpen className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
           ) : (
-            <PanelLeftClose className="h-5 w-5 text-white" />
+            <PanelLeftClose className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
           )}
         </button>
       </div>

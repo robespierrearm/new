@@ -16,11 +16,16 @@ import { EditTenderDialog } from '@/components/EditTenderDialog';
 import { TenderStatusChanger } from '@/components/TenderStatusChanger';
 import { Pencil, Trash2 } from 'lucide-react';
 
+type TabType = 'all' | 'new' | 'review' | 'inwork' | 'archive';
+type ArchiveFilter = 'all' | 'completed' | 'lost';
+
 export default function TendersPage() {
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingTender, setEditingTender] = useState<Tender | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>('all');
 
   // Загрузка тендеров
   const loadTenders = async () => {
@@ -147,9 +152,9 @@ export default function TendersPage() {
   const getStatusColor = (status: Tender['status']) => {
     switch (status) {
       case 'новый':
-        return 'bg-gray-100 text-gray-800';
-      case 'подано':
         return 'bg-blue-100 text-blue-800';
+      case 'подано':
+        return 'bg-indigo-100 text-indigo-800';
       case 'на рассмотрении':
         return 'bg-purple-100 text-purple-800';
       case 'победа':
@@ -157,13 +162,61 @@ export default function TendersPage() {
       case 'в работе':
         return 'bg-orange-100 text-orange-800';
       case 'завершён':
-        return 'bg-teal-100 text-teal-800';
+        return 'bg-green-50 text-green-700 border border-green-200';
       case 'проигрыш':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-700 border border-red-200';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Фильтрация тендеров по табам
+  const getFilteredTenders = () => {
+    let filtered = [...tenders];
+
+    switch (activeTab) {
+      case 'new':
+        filtered = tenders.filter(t => t.status === 'новый');
+        break;
+      case 'review':
+        filtered = tenders.filter(t => t.status === 'на рассмотрении');
+        break;
+      case 'inwork':
+        filtered = tenders.filter(t => t.status === 'в работе');
+        break;
+      case 'archive':
+        filtered = tenders.filter(t => t.status === 'завершён' || t.status === 'проигрыш');
+        
+        // Применяем фильтр архива
+        if (archiveFilter === 'completed') {
+          filtered = filtered.filter(t => t.status === 'завершён');
+        } else if (archiveFilter === 'lost') {
+          filtered = filtered.filter(t => t.status === 'проигрыш');
+        }
+        break;
+      case 'all':
+      default:
+        // Показываем все
+        break;
+    }
+
+    return filtered;
+  };
+
+  const filteredTenders = getFilteredTenders();
+
+  // Подсчёт тендеров для каждого таба
+  const getCounts = () => {
+    return {
+      all: tenders.length,
+      new: tenders.filter(t => t.status === 'новый').length,
+      review: tenders.filter(t => t.status === 'на рассмотрении').length,
+      inwork: tenders.filter(t => t.status === 'в работе').length,
+      archive: tenders.filter(t => t.status === 'завершён' || t.status === 'проигрыш').length,
+    };
+  };
+
+  const counts = getCounts();
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -179,11 +232,106 @@ export default function TendersPage() {
         </Button>
       </div>
 
+      {/* Табы */}
+      <div className="mb-6 bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div className="flex flex-wrap border-b">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'all'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Все тендеры <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">{counts.all}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('new')}
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'new'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Новые <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{counts.new}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('review')}
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'review'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            На рассмотрении <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{counts.review}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('inwork')}
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'inwork'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            В работе <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{counts.inwork}</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('archive');
+              setArchiveFilter('all');
+            }}
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'archive'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Архив <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">{counts.archive}</span>
+          </button>
+        </div>
+
+        {/* Фильтры архива */}
+        {activeTab === 'archive' && (
+          <div className="p-4 bg-gray-50 border-b flex gap-3">
+            <button
+              onClick={() => setArchiveFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                archiveFilter === 'all'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border hover:bg-gray-100'
+              }`}
+            >
+              Все
+            </button>
+            <button
+              onClick={() => setArchiveFilter('completed')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                archiveFilter === 'completed'
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : 'bg-white text-green-700 border border-green-200 hover:bg-green-50'
+              }`}
+            >
+              ✓ Завершённые
+            </button>
+            <button
+              onClick={() => setArchiveFilter('lost')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                archiveFilter === 'lost'
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'bg-white text-red-700 border border-red-200 hover:bg-red-50'
+              }`}
+            >
+              ✕ Проигрыш
+            </button>
+          </div>
+        )}
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
-      ) : tenders.length === 0 ? (
+      ) : filteredTenders.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-gray-500 text-lg">Тендеров пока нет</p>
           <Button
@@ -211,7 +359,7 @@ export default function TendersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tenders.map((tender) => (
+              {filteredTenders.map((tender) => (
                 <TableRow key={tender.id} className="hover:bg-gray-50 transition-colors">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
