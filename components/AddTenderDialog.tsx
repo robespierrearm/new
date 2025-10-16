@@ -32,6 +32,7 @@ export function AddTenderDialog({
     submission_date: '',
     submission_deadline: '',
     start_price: null,
+    submitted_price: null,
     win_price: null,
     status: 'новый',
   });
@@ -54,6 +55,7 @@ export function AddTenderDialog({
       submission_date: '',
       submission_deadline: '',
       start_price: null,
+      submitted_price: null,
       win_price: null,
       status: 'новый',
     });

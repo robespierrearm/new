@@ -14,6 +14,7 @@ export interface Tender {
   submission_date: string | null;
   submission_deadline: string | null;
   start_price: number | null;
+  submitted_price: number | null; // Цена по которой подали
   win_price: number | null;
   status: 'новый' | 'подано' | 'на рассмотрении' | 'победа' | 'в работе' | 'завершён' | 'проигрыш';
   created_at?: string;
@@ -26,7 +27,7 @@ export type TenderUpdate = Partial<TenderInsert>;
 // Логика переходов между статусами
 export const STATUS_TRANSITIONS: Record<Tender['status'], Tender['status'][]> = {
   'новый': ['подано'],
-  'подано': ['новый', 'на рассмотрении'],
+  'подано': ['новый'], // Возврат назад если нужно
   'на рассмотрении': ['победа', 'проигрыш'],
   'победа': ['в работе'],
   'в работе': ['завершён'],

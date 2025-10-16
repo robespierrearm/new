@@ -203,6 +203,7 @@ export default function TendersPage() {
                 <TableHead>Дата публикации</TableHead>
                 <TableHead>Дата подачи</TableHead>
                 <TableHead>Начальная цена</TableHead>
+                <TableHead>Цена подачи</TableHead>
                 <TableHead>Цена победы</TableHead>
                 <TableHead>Статус</TableHead>
                 <TableHead>Смена статуса</TableHead>
@@ -231,6 +232,7 @@ export default function TendersPage() {
                   <TableCell>{formatDate(tender.publication_date)}</TableCell>
                   <TableCell>{formatDate(tender.submission_date)}</TableCell>
                   <TableCell>{formatPrice(tender.start_price)}</TableCell>
+                  <TableCell>{formatPrice(tender.submitted_price)}</TableCell>
                   <TableCell>{formatPrice(tender.win_price)}</TableCell>
                   <TableCell>
                     <span

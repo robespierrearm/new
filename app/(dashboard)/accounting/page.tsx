@@ -13,6 +13,7 @@ interface TenderWithExpenses {
 export default function AccountingPage() {
   const [tendersWithExpenses, setTendersWithExpenses] = useState<TenderWithExpenses[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expensesTableMissing, setExpensesTableMissing] = useState(false);
 
   // Загрузка данных
   const loadData = async () => {
@@ -44,7 +45,13 @@ export default function AccountingPage() {
       .in('tender_id', tenders.map(t => t.id));
 
     if (expensesError) {
-      console.error('Ошибка загрузки расходов:', expensesError);
+      // Если таблица expenses не существует (код PGRST116 или 42P01), это нормально
+      if (expensesError.code === 'PGRST116' || expensesError.code === '42P01') {
+        console.warn('Таблица expenses не найдена. Создайте её в Supabase (см. SETUP_INSTRUCTIONS.md)');
+        setExpensesTableMissing(true);
+      } else {
+        console.error('Ошибка загрузки расходов:', expensesError);
+      }
     }
 
     // Группируем расходы по тендерам
@@ -88,6 +95,29 @@ export default function AccountingPage() {
           Финансовый учёт по выигранным тендерам
         </p>
       </div>
+
+      {/* Уведомление об отсутствии таблицы expenses */}
+      {expensesTableMissing && (
+        <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-orange-900">Требуется настройка БД</h3>
+              <p className="text-sm text-orange-700 mt-1">
+                Таблица <code className="bg-orange-100 px-1 rounded">expenses</code> не найдена в Supabase. 
+                Функционал добавления расходов будет недоступен.
+              </p>
+              <p className="text-sm text-orange-700 mt-2">
+                📝 Откройте <strong>SETUP_INSTRUCTIONS.md</strong> и выполните Шаг 2 (создание таблицы expenses)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-12">

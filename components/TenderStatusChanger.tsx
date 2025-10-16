@@ -24,7 +24,8 @@ interface TenderStatusChangerProps {
 export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChangerProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<Tender['status'] | null>(null);
-  const [winPrice, setWinPrice] = useState<string>('');
+  const [submittedPrice, setSubmittedPrice] = useState<string>(''); // Цена подачи
+  const [winPrice, setWinPrice] = useState<string>(''); // Цена победы
   const [isProcessing, setIsProcessing] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
 
@@ -60,6 +61,14 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
       return;
     }
 
+    // Если переход в "Подано" - запросить цену подачи
+    if (newStatus === 'подано') {
+      setSelectedStatus(newStatus);
+      setValidationError('');
+      setIsDialogOpen(true);
+      return;
+    }
+
     // Если переход в "Победа" - запросить цену победы
     if (newStatus === 'победа') {
       setSelectedStatus(newStatus);
@@ -86,9 +95,23 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
       // Автоматические действия при смене статуса
       switch (selectedStatus) {
         case 'подано':
-          // Автозаполнение даты подачи
+          // Автозаполнение даты подачи и сохранение цены подачи
           additionalData.submission_date = new Date().toISOString().split('T')[0];
-          break;
+          if (submittedPrice) {
+            additionalData.submitted_price = parseFloat(submittedPrice);
+          }
+          // Сначала переводим в "Подано"
+          await onStatusChange(tender.id, selectedStatus, additionalData);
+          
+          // Затем автоматически переводим в "На рассмотрении"
+          await onStatusChange(tender.id, 'на рассмотрении', {});
+          
+          setIsDialogOpen(false);
+          setSelectedStatus(null);
+          setSubmittedPrice('');
+          showNotification('на рассмотрении');
+          setIsProcessing(false);
+          return; // Выходим, чтобы не выполнять код ниже
 
         case 'победа':
           // Сохранение цены победы
@@ -112,6 +135,7 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
       setIsDialogOpen(false);
       setSelectedStatus(null);
       setWinPrice('');
+      setSubmittedPrice('');
       
       // Показать уведомление
       showNotification(selectedStatus);
@@ -221,6 +245,28 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
             </DialogDescription>
           </DialogHeader>
 
+          {!validationError && selectedStatus === 'подано' && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="submitted_price">Цена подачи (₽) *</Label>
+                <Input
+                  id="submitted_price"
+                  type="number"
+                  value={submittedPrice}
+                  onChange={(e) => setSubmittedPrice(e.target.value)}
+                  placeholder="Введите цену по которой подали"
+                  required
+                />
+                <p className="text-sm text-gray-500">
+                  Укажите стоимость по которой вы подали заявку на тендер
+                </p>
+                <p className="text-sm text-blue-600 font-medium">
+                  ℹ️ После подачи статус автоматически изменится на "На рассмотрении"
+                </p>
+              </div>
+            </div>
+          )}
+
           {!validationError && selectedStatus === 'победа' && (
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -248,6 +294,7 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
                 setIsDialogOpen(false);
                 setSelectedStatus(null);
                 setWinPrice('');
+                setSubmittedPrice('');
                 setValidationError('');
               }}
             >
@@ -256,7 +303,11 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
             {!validationError && (
               <Button
                 onClick={handleConfirm}
-                disabled={isProcessing || (selectedStatus === 'победа' && !winPrice)}
+                disabled={
+                  isProcessing || 
+                  (selectedStatus === 'подано' && !submittedPrice) ||
+                  (selectedStatus === 'победа' && !winPrice)
+                }
               >
                 {isProcessing ? 'Обработка...' : 'Подтвердить'}
               </Button>
