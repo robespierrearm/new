@@ -10,7 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Users, TrendingUp, Calendar, Clock } from 'lucide-react';
+import { FileText, Users, TrendingUp, Calendar, Clock, Download, FolderOpen } from 'lucide-react';
+import { supabase, File } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
 
 // Статичные данные для демонстрации
 const stats = [
@@ -83,6 +85,7 @@ const getStatusColor = (status: string) => {
 
 export default function DashboardPage() {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [dashboardFiles, setDashboardFiles] = useState<File[]>([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -91,6 +94,45 @@ export default function DashboardPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Загрузка файлов для дашборда
+  useEffect(() => {
+    const loadDashboardFiles = async () => {
+      const { data, error } = await supabase
+        .from('files')
+        .select('*')
+        .eq('show_on_dashboard', true)
+        .order('uploaded_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        setDashboardFiles(data);
+      }
+    };
+
+    loadDashboardFiles();
+  }, []);
+
+  // Скачивание файла
+  const handleDownload = async (file: File) => {
+    const { data, error } = await supabase.storage
+      .from('files')
+      .download(file.file_path);
+
+    if (error) {
+      console.error('Ошибка скачивания:', error);
+      return;
+    }
+
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.original_name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ru-RU', {
@@ -198,6 +240,56 @@ export default function DashboardPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Файлы для работы */}
+      {dashboardFiles.length > 0 && (
+        <Card className="mt-8">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-blue-600" />
+              Файлы для работы
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/files'}>
+              Все файлы
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {dashboardFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{file.name}</div>
+                      <div className="text-sm text-gray-500 flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                          {file.category}
+                        </span>
+                        <span>•</span>
+                        <span>{new Date(file.uploaded_at).toLocaleDateString('ru-RU')}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(file)}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Скачать
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

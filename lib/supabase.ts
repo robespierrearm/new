@@ -60,6 +60,44 @@ export interface Supplier {
 export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
 export type SupplierUpdate = Partial<SupplierInsert>;
 
+// Files types
+export interface File {
+  id: string;
+  name: string;
+  original_name: string;
+  file_path: string;
+  file_size: number | null;
+  mime_type: string | null;
+  category: string;
+  show_on_dashboard: boolean;
+  uploaded_at: string;
+  updated_at: string;
+}
+
+export interface FileInsert {
+  name: string;
+  original_name: string;
+  file_path: string;
+  file_size?: number | null;
+  mime_type?: string | null;
+  category?: string;
+  show_on_dashboard?: boolean;
+}
+
+export interface FileUpdate {
+  name?: string;
+  category?: string;
+  show_on_dashboard?: boolean;
+}
+
+export const FILE_CATEGORIES = [
+  'карточка предприятия',
+  'шаблон',
+  'договор',
+  'документация',
+  'прочее',
+] as const;
+
 // Типы для расходов (бухгалтерия)
 export interface Expense {
   id: number;

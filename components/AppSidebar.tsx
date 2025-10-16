@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   ChevronDown,
   ChevronRight,
+  FolderOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,11 @@ const menuItems = [
     title: 'Бухгалтерия',
     href: '/accounting',
     icon: DollarSign,
+  },
+  {
+    title: 'Файлы',
+    href: '/files',
+    icon: FolderOpen,
   },
   {
     title: 'Настройки',
