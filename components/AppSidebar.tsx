@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Home,
   FileText,
@@ -51,6 +51,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTendersOpen, setIsTendersOpen] = useState(true); // Выпадающее меню тендеров
@@ -137,47 +138,47 @@ export function AppSidebar() {
 
           // Если это пункт "Тендеры" - делаем выпадающее меню
           if (isTendersItem) {
+            const isAllTenders = pathname === '/tenders' && !searchParams.get('tab');
+            
             return (
               <div key={item.href} className="space-y-1">
-                {/* Основная кнопка Тендеры */}
-                <button
-                  onClick={toggleTenders}
-                  className={cn(
-                    'w-full gap-3 transition-all flex items-center rounded-md text-sm font-medium h-9 px-4',
-                    isActive 
-                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
-                      : 'hover:bg-secondary/80 text-gray-700',
-                    isCollapsed && 'justify-center px-2'
-                  )}
-                >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  {!isCollapsed && (
-                    <>
-                      <span className="truncate flex-1 text-left">{item.title}</span>
-                      {isTendersOpen ? (
-                        <ChevronDown className="h-4 w-4 shrink-0" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 shrink-0" />
+                {/* Основная кнопка Тендеры - кликабельна и открывает все тендеры */}
+                <div className="relative">
+                  <Link href="/tenders" onClick={closeMobileMenu}>
+                    <button
+                      className={cn(
+                        'w-full gap-3 transition-all flex items-center rounded-md text-sm font-medium h-9 px-4',
+                        isAllTenders
+                          ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
+                          : isActive
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'hover:bg-secondary/80 text-gray-700',
+                        isCollapsed && 'justify-center px-2'
                       )}
-                    </>
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      {!isCollapsed && (
+                        <span className="truncate flex-1 text-left">{item.title}</span>
+                      )}
+                    </button>
+                  </Link>
+                  {!isCollapsed && (
+                    <button
+                      onClick={toggleTenders}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded"
+                    >
+                      {isTendersOpen ? (
+                        <ChevronDown className="h-4 w-4 text-gray-600" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-600" />
+                      )}
+                    </button>
                   )}
-                </button>
+                </div>
 
                 {/* Подменю тендеров */}
                 {isTendersOpen && !isCollapsed && (
                   <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-3">
-                    <Link href="/tenders" onClick={closeMobileMenu}>
-                      <button
-                        className={cn(
-                          'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
-                          pathname === '/tenders' && !pathname.includes('?')
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        )}
-                      >
-                        Все тендеры
-                      </button>
-                    </Link>
                     <Link href="/tenders?tab=new" onClick={closeMobileMenu}>
                       <button
                         className={cn(
