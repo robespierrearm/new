@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tender, Expense, ExpenseInsert, EXPENSE_CATEGORIES, supabase } from '@/lib/supabase';
+import { Tender, Expense, ExpenseInsert, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<ExpenseInsert>({
     tender_id: tender.id,
-    category: 'Материалы',
+    category: '',
     amount: 0,
     description: '',
   });
@@ -44,6 +44,11 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
 
   // Добавление расхода
   const handleAddExpense = async () => {
+    if (!newExpense.category.trim()) {
+      alert('Введите категорию расхода');
+      return;
+    }
+
     if (newExpense.amount <= 0) {
       alert('Сумма расхода должна быть больше 0');
       return;
@@ -57,7 +62,7 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
     } else {
       setNewExpense({
         tender_id: tender.id,
-        category: 'Материалы',
+        category: '',
         amount: 0,
         description: '',
       });
@@ -189,16 +194,12 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <Label htmlFor="category">Категория</Label>
-                    <select
+                    <Input
                       id="category"
                       value={newExpense.category}
                       onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
-                    >
-                      {EXPENSE_CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                      placeholder="Например: Материалы"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="amount">Сумма (₽)</Label>
