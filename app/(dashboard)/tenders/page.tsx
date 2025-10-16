@@ -117,15 +117,15 @@ export default function TendersPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Тендеры</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Тендеры</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
             Управление тендерами и заявками
           </p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} size="lg">
+        <Button onClick={() => setIsAddDialogOpen(true)} size="lg" className="w-full md:w-auto">
           Добавить тендер
         </Button>
       </div>

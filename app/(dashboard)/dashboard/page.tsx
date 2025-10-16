@@ -82,11 +82,11 @@ const getStatusColor = (status: string) => {
 
 export default function DashboardPage() {
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Общая информация</h1>
-        <p className="text-gray-600 mt-2">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Общая информация</h1>
+        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
           Обзор ключевых показателей вашего бизнеса
         </p>
       </div>
