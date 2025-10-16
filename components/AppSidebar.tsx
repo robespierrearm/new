@@ -185,7 +185,7 @@ export function AppSidebar() {
                       <button
                         className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
-                          pathname.includes('tab=new')
+                          tabParam === 'new'
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-100'
                         )}
@@ -197,7 +197,7 @@ export function AppSidebar() {
                       <button
                         className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
-                          pathname.includes('tab=review')
+                          tabParam === 'review'
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-100'
                         )}
@@ -209,7 +209,7 @@ export function AppSidebar() {
                       <button
                         className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
-                          pathname.includes('tab=inwork')
+                          tabParam === 'inwork'
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-100'
                         )}
@@ -221,7 +221,7 @@ export function AppSidebar() {
                       <button
                         className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
-                          pathname.includes('tab=archive')
+                          tabParam === 'archive'
                             ? 'bg-blue-50 text-blue-700 font-medium'
                             : 'text-gray-600 hover:bg-gray-100'
                         )}
