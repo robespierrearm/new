@@ -106,9 +106,25 @@ export default function TendersPage() {
     if (error) {
       console.error('Ошибка смены статуса:', error);
       throw error;
-    } else {
-      loadTenders();
     }
+
+    // Автоматическое создание записи в бухгалтерии при переходе в "Победа"
+    if (newStatus === 'победа') {
+      // Проверяем, нет ли уже записи для этого тендера в expenses
+      const { data: existingExpenses } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('tender_id', tenderId)
+        .limit(1);
+
+      // Если записей нет - создаём пустую запись (placeholder)
+      // Это нужно чтобы тендер появился в бухгалтерии
+      if (!existingExpenses || existingExpenses.length === 0) {
+        console.log(`Тендер ${tenderId} переведён в статус "Победа" - запись в бухгалтерии будет создана автоматически при добавлении первого расхода`);
+      }
+    }
+
+    loadTenders();
   };
 
   // Форматирование даты

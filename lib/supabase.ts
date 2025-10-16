@@ -58,3 +58,28 @@ export interface Supplier {
 
 export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
 export type SupplierUpdate = Partial<SupplierInsert>;
+
+// Типы для расходов (бухгалтерия)
+export interface Expense {
+  id: number;
+  tender_id: number;
+  category: string;
+  amount: number;
+  description: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type ExpenseInsert = Omit<Expense, 'id' | 'created_at' | 'updated_at'>;
+export type ExpenseUpdate = Partial<ExpenseInsert>;
+
+// Категории расходов
+export const EXPENSE_CATEGORIES = [
+  'Материалы',
+  'Работа',
+  'Транспорт',
+  'Оборудование',
+  'Субподряд',
+  'Налоги',
+  'Прочее',
+] as const;
