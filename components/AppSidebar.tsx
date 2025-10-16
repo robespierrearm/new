@@ -12,8 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -83,30 +83,31 @@ export function AppSidebar() {
         )}
       >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b px-4 bg-gradient-to-r from-blue-50 to-purple-50">
+      <div className="flex h-16 items-center border-b bg-gradient-to-r from-blue-600 to-purple-600 relative overflow-hidden">
         <Link
           href="/dashboard"
-          className="flex items-center hover:opacity-80 transition-opacity"
+          className="flex-1 flex items-center px-4 py-3 hover:bg-white/10 transition-all duration-200"
           onClick={closeMobileMenu}
         >
           {!isCollapsed ? (
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-white drop-shadow-sm">
               TenderCRM
             </h1>
           ) : (
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="text-2xl font-bold text-white drop-shadow-sm">
               TC
             </div>
           )}
         </Link>
         <button
           onClick={toggleCollapse}
-          className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/50 transition-colors"
+          className="hidden md:flex items-center justify-center w-12 h-full hover:bg-white/10 transition-all duration-200 border-l border-white/20"
+          title={isCollapsed ? "Развернуть меню" : "Свернуть меню"}
         >
           {isCollapsed ? (
-            <ChevronRight className="h-5 w-5 text-gray-600" />
+            <PanelLeftOpen className="h-5 w-5 text-white" />
           ) : (
-            <ChevronLeft className="h-5 w-5 text-gray-600" />
+            <PanelLeftClose className="h-5 w-5 text-white" />
           )}
         </button>
       </div>

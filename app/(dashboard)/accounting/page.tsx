@@ -158,9 +158,12 @@ export default function AccountingPage() {
 
             <div className="bg-white p-4 rounded-lg border shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-gray-600">Общие расходы</p>
                   <p className="text-2xl font-bold text-red-600">{formatAmount(totalExpenses)}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Налог УСН: <span className="font-medium text-orange-600">{formatAmount(totalTax)}</span>
+                  </p>
                 </div>
                 <TrendingDown className="h-8 w-8 text-red-600" />
               </div>
