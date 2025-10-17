@@ -4,18 +4,11 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase, Tender, TenderInsert, STATUS_LABELS } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
 import { AddTenderDialog } from '@/components/AddTenderDialog';
 import { EditTenderDialog } from '@/components/EditTenderDialog';
 import { TenderStatusChanger } from '@/components/TenderStatusChanger';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Calendar, DollarSign, Link as LinkIcon, FileText } from 'lucide-react';
 
 type TabType = 'all' | 'new' | 'review' | 'inwork' | 'archive';
 type ArchiveFilter = 'all' | 'completed' | 'lost';
@@ -62,11 +55,21 @@ function TendersContent() {
 
   // Добавление тендера
   const handleAddTender = async (tender: TenderInsert) => {
-    const { error } = await supabase.from('tenders').insert([tender]);
+    const payload = {
+      ...tender,
+      link: tender.link || null,
+      submission_date: tender.submission_date || null,
+      submission_deadline: tender.submission_deadline || null,
+      start_price: tender.start_price ?? null,
+      submitted_price: tender.submitted_price ?? null,
+      win_price: tender.win_price ?? null,
+    };
+
+    const { error } = await supabase.from('tenders').insert([payload]);
 
     if (error) {
-      console.error('Ошибка добавления тендера:', error);
-      alert('Ошибка при добавлении тендера');
+      console.error('Ошибка добавления тендера:', error?.message || error, error);
+      alert(error?.message || 'Ошибка при добавлении тендера');
     } else {
       loadTenders();
       setIsAddDialogOpen(false);
@@ -300,82 +303,106 @@ function TendersContent() {
           </Button>
         </div>
       ) : (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Название тендера</TableHead>
-                <TableHead>Дата публикации</TableHead>
-                <TableHead>Дата подачи</TableHead>
-                <TableHead>Начальная цена</TableHead>
-                <TableHead>Цена подачи</TableHead>
-                <TableHead>Цена победы</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead>Смена статуса</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTenders.map((tender) => (
-                <TableRow key={tender.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {tender.name}
+        <div className="grid gap-4">
+          {filteredTenders.map((tender) => (
+            <Card key={tender.id} className="p-4 hover:shadow-lg transition-shadow">
+              <div className="flex flex-col gap-3">
+                {/* Заголовок и действия */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <h3 className="font-semibold text-base text-gray-900 truncate">{tender.name}</h3>
                       {tender.link && (
                         <a
                           href={tender.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-blue-600 hover:text-blue-800 flex-shrink-0"
                           title="Открыть ссылку"
                         >
-                          🔗
+                          <LinkIcon className="h-4 w-4" />
                         </a>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>{formatDate(tender.publication_date)}</TableCell>
-                  <TableCell>{formatDate(tender.submission_date)}</TableCell>
-                  <TableCell>{formatPrice(tender.start_price)}</TableCell>
-                  <TableCell>{formatPrice(tender.submitted_price)}</TableCell>
-                  <TableCell>{formatPrice(tender.win_price)}</TableCell>
-                  <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                         tender.status
                       )}`}
                     >
                       {STATUS_LABELS[tender.status]}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <TenderStatusChanger
-                      tender={tender}
-                      onStatusChange={handleStatusChange}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingTender(tender)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteTender(tender.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingTender(tender)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteTender(tender.id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Информация */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Публикация</p>
+                      <p className="font-medium text-gray-900">{formatDate(tender.publication_date)}</p>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Подача</p>
+                      <p className="font-medium text-gray-900">{formatDate(tender.submission_date)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Начальная</p>
+                      <p className="font-medium text-gray-900">{formatPrice(tender.start_price)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Подачи</p>
+                      <p className="font-medium text-gray-900">{formatPrice(tender.submitted_price)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-gray-400" />
+                    <div>
+                      <p className="text-xs text-gray-500">Победы</p>
+                      <p className="font-medium text-green-600">{formatPrice(tender.win_price)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Смена статуса */}
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-gray-500 mb-2">Смена статуса:</p>
+                  <TenderStatusChanger
+                    tender={tender}
+                    onStatusChange={handleStatusChange}
+                  />
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 

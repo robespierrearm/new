@@ -211,20 +211,56 @@ export function TenderStatusChanger({ tender, onStatusChange }: TenderStatusChan
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        {availableTransitions.map((nextStatus) => (
-          <Button
-            key={nextStatus}
-            onClick={() => handleStatusClick(nextStatus)}
-            size="sm"
-            className={cn(
-              'gap-2',
-              getStatusColor(nextStatus)
-            )}
-          >
-            {getStatusIcon(nextStatus)}
-            {STATUS_LABELS[nextStatus]}
-          </Button>
-        ))}
+        {availableTransitions.map((nextStatus) => {
+          // Современный минималистичный стиль для Победа/Проигрыш
+          if (nextStatus === 'победа') {
+            return (
+              <button
+                key={nextStatus}
+                onClick={() => handleStatusClick(nextStatus)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md transition-colors"
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+                Победа
+              </button>
+            );
+          }
+          if (nextStatus === 'проигрыш') {
+            return (
+              <button
+                key={nextStatus}
+                onClick={() => handleStatusClick(nextStatus)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                Проигрыш
+              </button>
+            );
+          }
+          // Остальные переходы - современный стиль
+          const colorMap: Record<Tender['status'], string> = {
+            'новый': 'text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200',
+            'подано': 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+            'на рассмотрении': 'text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200',
+            'победа': 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200',
+            'в работе': 'text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-200',
+            'завершён': 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-200',
+            'проигрыш': 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200',
+          };
+          return (
+            <button
+              key={nextStatus}
+              onClick={() => handleStatusClick(nextStatus)}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-md transition-colors',
+                colorMap[nextStatus]
+              )}
+            >
+              {getStatusIcon(nextStatus)}
+              {STATUS_LABELS[nextStatus]}
+            </button>
+          );
+        })}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

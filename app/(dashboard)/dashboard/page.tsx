@@ -10,82 +10,67 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Users, TrendingUp, Calendar, Clock, Download, FolderOpen } from 'lucide-react';
-import { supabase, File } from '@/lib/supabase';
+import { FileText, Clock, Download, FolderOpen, Briefcase, Eye, Bell, ChevronRight } from 'lucide-react';
+import { supabase, File, Tender } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 
-// Статичные данные для демонстрации
-const stats = [
-  {
-    title: 'Количество тендеров',
-    value: '24',
-    icon: FileText,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    title: 'Количество поставщиков',
-    value: '12',
-    icon: Users,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-  },
-  {
-    title: 'Маржинальность',
-    value: '18.5%',
-    icon: TrendingUp,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-  },
-];
-
-const recentTenders = [
-  {
-    id: 1,
-    name: 'Поставка офисной мебели',
-    date: '2025-10-15',
-    amount: '1 250 000 ₽',
-    status: 'Подано',
-  },
-  {
-    id: 2,
-    name: 'Ремонт помещений',
-    date: '2025-10-14',
-    amount: '850 000 ₽',
-    status: 'Черновик',
-  },
-  {
-    id: 3,
-    name: 'Закупка компьютерной техники',
-    date: '2025-10-13',
-    amount: '2 100 000 ₽',
-    status: 'Победа',
-  },
-  {
-    id: 4,
-    name: 'Услуги по уборке',
-    date: '2025-10-12',
-    amount: '450 000 ₽',
-    status: 'Подано',
-  },
-];
-
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: Tender['status']) => {
   switch (status) {
-    case 'Победа':
-      return 'bg-green-100 text-green-800';
-    case 'Подано':
+    case 'новый':
       return 'bg-blue-100 text-blue-800';
-    case 'Черновик':
-      return 'bg-gray-100 text-gray-800';
+    case 'подано':
+      return 'bg-indigo-100 text-indigo-800';
+    case 'на рассмотрении':
+      return 'bg-purple-100 text-purple-800';
+    case 'победа':
+      return 'bg-green-100 text-green-800';
+    case 'в работе':
+      return 'bg-orange-100 text-orange-800';
+    case 'завершён':
+      return 'bg-green-50 text-green-700';
+    case 'проигрыш':
+      return 'bg-red-50 text-red-700';
     default:
       return 'bg-gray-100 text-gray-800';
   }
 };
 
+const getStatusLabel = (status: Tender['status']) => {
+  const labels: Record<Tender['status'], string> = {
+    'новый': 'Новый',
+    'подано': 'Подано',
+    'на рассмотрении': 'На рассмотрении',
+    'победа': 'Победа',
+    'в работе': 'В работе',
+    'завершён': 'Завершён',
+    'проигрыш': 'Проигрыш',
+  };
+  return labels[status] || status;
+};
+
+const formatPrice = (price: number | null) => {
+  if (!price) return '—';
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    maximumFractionDigits: 0,
+  }).format(price);
+};
+
+const formatTenderDate = (dateString: string | null) => {
+  if (!dateString) return '—';
+  return new Date(dateString).toLocaleDateString('ru-RU');
+};
+
 export default function DashboardPage() {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [dashboardFiles, setDashboardFiles] = useState<File[]>([]);
+  const [tenders, setTenders] = useState<Tender[]>([]);
+  const [stats, setStats] = useState({
+    inWork: 0,
+    underReview: 0,
+    reminders: 0,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -93,6 +78,43 @@ export default function DashboardPage() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Загрузка тендеров
+  useEffect(() => {
+    const loadTenders = async () => {
+      const { data, error } = await supabase
+        .from('tenders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        setTenders(data);
+        
+        // Подсчёт статистики
+        const inWorkCount = data.filter(t => t.status === 'в работе').length;
+        const underReviewCount = data.filter(t => t.status === 'на рассмотрении').length;
+        
+        // Напоминания: тендеры с дедлайном в ближайшие 3 дня
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+        const remindersCount = data.filter(t => {
+          if (!t.submission_deadline) return false;
+          const deadline = new Date(t.submission_deadline);
+          const now = new Date();
+          return deadline > now && deadline <= threeDaysFromNow;
+        }).length;
+
+        setStats({
+          inWork: inWorkCount,
+          underReview: underReviewCount,
+          reminders: remindersCount,
+        });
+      }
+    };
+
+    loadTenders();
   }, []);
 
   // Загрузка файлов для дашборда
@@ -134,162 +156,201 @@ export default function DashboardPage() {
     URL.revokeObjectURL(url);
   };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
-      weekday: 'long'
+      year: 'numeric'
     });
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
+  // Динамические данные для трёх основных блоков
+  const mainCards = [
+    {
+      title: 'В работе',
+      value: stats.inWork.toString(),
+      description: 'Активных тендеров',
+      icon: Briefcase,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+    },
+    {
+      title: 'На рассмотрении',
+      value: stats.underReview.toString(),
+      description: 'Ожидают решения',
+      icon: Eye,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+    },
+    {
+      title: 'Напоминания',
+      value: stats.reminders.toString(),
+      description: 'Требуют внимания',
+      icon: Bell,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
+    },
+  ];
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 md:mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
+      <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        {/* Верхняя строка: Заголовок слева, Время справа */}
+        <div className="flex items-center justify-between mb-5">
+          {/* Заголовок */}
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Общая информация</h1>
-            <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
-              Обзор ключевых показателей вашего бизнеса
-            </p>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Общая информация</h1>
+            <p className="text-xs text-gray-600">Обзор ключевых показателей вашего бизнеса</p>
           </div>
-          
-          {/* Дата и время */}
-          <div className="flex flex-col gap-2 bg-gradient-to-br from-blue-50 to-purple-50 px-4 py-3 rounded-lg border border-blue-100 shadow-sm">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">{formatDate(currentDateTime)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-700">
-              <Clock className="h-4 w-4 text-purple-600" />
-              <span className="text-lg font-bold tabular-nums">{formatTime(currentDateTime)}</span>
-            </div>
+
+          {/* Время */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm border border-gray-200">
+            <Clock className="h-3.5 w-3.5 text-gray-500" />
+            <span className="text-xs font-medium text-gray-700 tabular-nums">
+              {formatTime(currentDateTime)}
+            </span>
+            <span className="text-xs text-gray-400">•</span>
+            <span className="text-xs text-gray-500">{formatDate(currentDateTime)}</span>
           </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card
-              key={stat.title}
-              className="transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
-            >
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {stat.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">
-                  {stat.value}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Recent Tenders Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Последние тендеры</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Название</TableHead>
-                <TableHead>Дата</TableHead>
-                <TableHead>Сумма</TableHead>
-                <TableHead>Статус</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentTenders.map((tender) => (
-                <TableRow key={tender.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{tender.name}</TableCell>
-                  <TableCell>{tender.date}</TableCell>
-                  <TableCell>{tender.amount}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        tender.status
-                      )}`}
-                    >
-                      {tender.status}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Файлы для работы */}
-      {dashboardFiles.length > 0 && (
-        <Card className="mt-8">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 text-blue-600" />
-              Файлы для работы
-            </CardTitle>
-            <Button variant="outline" size="sm" onClick={() => window.location.href = '/files'}>
-              Все файлы
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {dashboardFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{file.name}</div>
-                      <div className="text-sm text-gray-500 flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
-                          {file.category}
-                        </span>
-                        <span>•</span>
-                        <span>{new Date(file.uploaded_at).toLocaleDateString('ru-RU')}</span>
-                      </div>
+        {/* Три основных блока */}
+        <div className="grid gap-3 md:grid-cols-3 mb-5">
+          {mainCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Card
+                key={card.title}
+                className={`transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer border ${card.borderColor} bg-white`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={`p-2 rounded-lg ${card.bgColor}`}>
+                      <Icon className={`h-5 w-5 ${card.color}`} />
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDownload(file)}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    Скачать
-                  </Button>
+                  <div className="space-y-0.5">
+                    <h3 className="text-xs font-medium text-gray-600">{card.title}</h3>
+                    <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                    <p className="text-xs text-gray-500">{card.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Нижние два блока: Последние тендеры (70%) + Файлы (30%) */}
+        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+          {/* Последние тендеры */}
+          <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="border-b px-4 py-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900">Последние тендеры</CardTitle>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => window.location.href = '/tenders'}>
+                  Все тендеры
+                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {tenders.length > 0 ? (
+                <div className="divide-y">
+                  {tenders.map((tender) => (
+                    <div key={tender.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-gray-900 truncate mb-1">{tender.name}</h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{formatTenderDate(tender.publication_date)}</span>
+                            <span>•</span>
+                            <span className="font-medium text-gray-700">{formatPrice(tender.start_price)}</span>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(
+                            tender.status
+                          )}`}
+                        >
+                          {getStatusLabel(tender.status)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              ) : (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p>Нет тендеров для отображения</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Файлы */}
+          <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="border-b px-4 py-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-blue-600" />
+                  Файлы
+                </CardTitle>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => window.location.href = '/files'}>
+                  Все
+                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3">
+              {dashboardFiles.length > 0 ? (
+                <div className="space-y-2">
+                  {dashboardFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                    >
+                      <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+                        <FileText className="h-3.5 w-3.5 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-xs text-gray-900 truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                            {file.category}
+                          </span>
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload(file)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500 text-xs">
+                  <FolderOpen className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  <p>Нет файлов для отображения</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
