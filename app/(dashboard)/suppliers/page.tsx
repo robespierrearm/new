@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/table';
 import { AddSupplierDialog } from '@/components/AddSupplierDialog';
 import { EditSupplierDialog } from '@/components/EditSupplierDialog';
-import { Pencil, Trash2, Search } from 'lucide-react';
+import { Pencil, Trash2, Search, Phone, Mail, FileText } from 'lucide-react';
+import { formatPhoneForDisplay } from '@/lib/phoneUtils';
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -158,58 +159,127 @@ export default function SuppliersPage() {
           )}
         </div>
       ) : (
-        <div className="border rounded-lg bg-white overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Название компании</TableHead>
-                <TableHead>Контактное лицо</TableHead>
-                <TableHead>Телефон</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Категория</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSuppliers.map((supplier) => (
-                <TableRow key={supplier.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.contact_person || '—'}</TableCell>
-                  <TableCell>{supplier.phone || '—'}</TableCell>
-                  <TableCell>{supplier.email || '—'}</TableCell>
-                  <TableCell>
-                    {supplier.category ? (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {supplier.category}
-                      </span>
-                    ) : (
-                      '—'
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingSupplier(supplier)}
-                        className="hover:bg-blue-50"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteSupplier(supplier.id)}
-                        className="hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+        <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
+          {/* Заголовок таблицы */}
+          <div className="grid grid-cols-[2.5fr_1.5fr_2fr_2fr_2.5fr_110px] gap-6 px-6 py-3 bg-gray-50 border-b font-medium text-sm text-gray-700">
+            <div className="flex items-center gap-2">
+              <span>🏢</span>
+              <span>Компания</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>👤</span>
+              <span>Контакт</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-gray-500" />
+              <span>Телефон</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-gray-500" />
+              <span>Email</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-gray-500" />
+              <span>Примечания</span>
+            </div>
+            <div className="text-right">Действия</div>
+          </div>
+
+          {/* Строки данных */}
+          <div className="divide-y">
+            {filteredSuppliers.map((supplier) => (
+              <div
+                key={supplier.id}
+                className="grid grid-cols-[2.5fr_1.5fr_2fr_2fr_2.5fr_110px] gap-6 px-6 py-4 hover:bg-gray-50 transition-colors items-center"
+              >
+                {/* Компания */}
+                <div className="min-w-0">
+                  <div className="font-semibold text-gray-900 text-base truncate mb-1">
+                    {supplier.name}
+                  </div>
+                  {supplier.category && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {supplier.category}
+                    </span>
+                  )}
+                </div>
+
+                {/* Контактное лицо */}
+                <div className="text-sm text-gray-700 truncate">
+                  {supplier.contact_person || <span className="text-gray-400 italic">Не указан</span>}
+                </div>
+
+                {/* Телефон */}
+                <div className="text-sm">
+                  {supplier.phone ? (
+                    <a
+                      href={`tel:${supplier.phone.replace(/\D/g, '')}`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors font-medium border border-green-200 whitespace-nowrap"
+                      title="Нажмите для звонка"
+                    >
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="font-mono text-xs">{formatPhoneForDisplay(supplier.phone)}</span>
+                    </a>
+                  ) : (
+                    <span className="text-gray-400 italic text-xs">—</span>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div className="text-sm min-w-0">
+                  {supplier.email ? (
+                    <a
+                      href={`mailto:${supplier.email}`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors font-medium border border-blue-200 max-w-full whitespace-nowrap"
+                      title="Нажмите для отправки письма"
+                    >
+                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate text-xs">{supplier.email}</span>
+                    </a>
+                  ) : (
+                    <span className="text-gray-400 italic text-xs">—</span>
+                  )}
+                </div>
+
+                {/* Примечания */}
+                <div className="text-sm text-gray-600 min-w-0">
+                  {supplier.notes ? (
+                    <div 
+                      className="flex items-start gap-1.5 text-xs text-gray-600" 
+                      title={supplier.notes}
+                    >
+                      <FileText className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-gray-400" />
+                      <span className="line-clamp-2 leading-relaxed">{supplier.notes}</span>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ) : (
+                    <span className="text-gray-400 italic text-xs">—</span>
+                  )}
+                </div>
+
+                {/* Действия */}
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingSupplier(supplier)}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                    title="Редактировать"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteSupplier(supplier.id)}
+                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                    title="Удалить"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

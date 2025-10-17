@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/PhoneInput';
+import { normalizePhoneForStorage } from '@/lib/phoneUtils';
 
 interface EditSupplierDialogProps {
   supplier: Supplier;
@@ -41,7 +43,13 @@ export function EditSupplierDialog({
       return;
     }
 
-    onUpdate(supplier.id, formData);
+    // Нормализуем телефон перед сохранением
+    const updatedData = {
+      ...formData,
+      phone: formData.phone ? normalizePhoneForStorage(formData.phone) : '',
+    };
+
+    onUpdate(supplier.id, updatedData);
   };
 
   return (
@@ -84,14 +92,11 @@ export function EditSupplierDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-phone">Телефон</Label>
-                <Input
-                  id="edit-phone"
-                  type="tel"
+                <PhoneInput
                   value={formData.phone || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, phone: value })
                   }
-                  placeholder="+7 (999) 123-45-67"
                 />
               </div>
 
