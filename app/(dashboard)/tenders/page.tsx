@@ -326,40 +326,43 @@ function TendersContent() {
 
       {/* Фильтры архива (только если активен таб Архив) */}
       {activeTab === 'archive' && (
-        <div className="mb-6 bg-white rounded-lg border shadow-sm p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Фильтр архива:</h3>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setArchiveFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                archiveFilter === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white text-gray-700 border hover:bg-gray-100'
-              }`}
-            >
-              Все
-            </button>
-            <button
-              onClick={() => setArchiveFilter('completed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                archiveFilter === 'completed'
-                  ? 'bg-green-600 text-white shadow-sm'
-                  : 'bg-white text-green-700 border border-green-200 hover:bg-green-50'
-              }`}
-            >
-              ✓ Завершённые
-            </button>
-            <button
-              onClick={() => setArchiveFilter('lost')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                archiveFilter === 'lost'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'bg-white text-red-700 border border-red-200 hover:bg-red-50'
-              }`}
-            >
-              ✕ Проигрыш
-            </button>
-          </div>
+        <div className="mb-4 inline-flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setArchiveFilter('all')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              archiveFilter === 'all'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Все
+          </button>
+          <button
+            onClick={() => setArchiveFilter('completed')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              archiveFilter === 'completed'
+                ? 'bg-white text-green-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <span>✓</span>
+              <span>Завершённые</span>
+            </span>
+          </button>
+          <button
+            onClick={() => setArchiveFilter('lost')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              archiveFilter === 'lost'
+                ? 'bg-white text-red-700 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <span>✕</span>
+              <span>Проигрыш</span>
+            </span>
+          </button>
         </div>
       )}
 

@@ -271,73 +271,49 @@ export default function FilesPage() {
         </Button>
       </div>
 
-      {/* Поиск и фильтры */}
-      <div className="mb-6 bg-white p-4 rounded-lg border shadow-sm space-y-4">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Поиск и фильтры</h3>
-        </div>
+      {/* Компактные фильтры в одну строку */}
+      <div className="mb-4 flex flex-wrap gap-2 items-center">
+        {/* Маленький поиск */}
+        <Input
+          placeholder="🔍"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-32 h-8 text-xs"
+        />
         
-        {/* Поиск */}
-        <div>
-          <Label>Поиск по названию</Label>
-          <Input
-            placeholder="Введите название файла..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <Label>Тип документа</Label>
-            <Select value={filterDocType} onValueChange={setFilterDocType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все типы</SelectItem>
-                {DOCUMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {DOCUMENT_TYPE_ICONS[type]} {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Тендер</Label>
-            <Select value={filterTender} onValueChange={setFilterTender}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все тендеры</SelectItem>
-                {tenders.map((tender) => (
-                  <SelectItem key={tender.id} value={tender.id.toString()}>
-                    {tender.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Категория</Label>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все категории</SelectItem>
-                {FILE_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Вкладки типов документов */}
+        <div className="inline-flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setFilterDocType('all')}
+            className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+              filterDocType === 'all'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Все
+          </button>
+          {DOCUMENT_TYPES.map((docType) => {
+            const Icon = DOCUMENT_TYPE_ICONS[docType];
+            const isActive = filterDocType === docType;
+            
+            return (
+              <button
+                key={docType}
+                onClick={() => setFilterDocType(docType)}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${
+                  isActive
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span className="flex items-center gap-1">
+                  <Icon className="h-3 w-3" />
+                  <span className="capitalize">{docType}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
