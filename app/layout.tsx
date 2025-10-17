@@ -32,12 +32,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "TenderCRM",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#f97316",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({

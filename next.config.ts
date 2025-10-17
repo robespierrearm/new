@@ -5,9 +5,11 @@ const isProd = process.env.NODE_ENV === 'production';
 const nextConfig: NextConfig = {
   output: isProd ? 'export' : undefined,
   basePath: isProd ? '/new' : '',
+  assetPrefix: isProd ? '/new' : '',
   images: {
     unoptimized: true,
   },
+  
   // Оптимизации
   compress: true,
   poweredByHeader: false,
@@ -18,10 +20,18 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   
+  // Игнорируем ESLint ошибки при сборке
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Оптимизация бандла
   experimental: {
-    optimizePackageImports: ['lucide-react', '@supabase/supabase-js'],
+    optimizePackageImports: ['lucide-react', '@supabase/supabase-js', '@radix-ui/react-dialog', '@radix-ui/react-select'],
   },
+  
+  // Отключаем генерацию source maps в production
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

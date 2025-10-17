@@ -294,7 +294,7 @@ export default function FilesPage() {
             Все
           </button>
           {DOCUMENT_TYPES.map((docType) => {
-            const IconComponent = DOCUMENT_TYPE_ICONS[docType];
+            const icon = DOCUMENT_TYPE_ICONS[docType];
             const isActive = filterDocType === docType;
             
             return (
@@ -308,7 +308,7 @@ export default function FilesPage() {
                 }`}
               >
                 <span className="flex items-center gap-1">
-                  <IconComponent className="h-3 w-3" />
+                  <span className="text-sm">{icon}</span>
                   <span className="capitalize">{docType}</span>
                 </span>
               </button>
