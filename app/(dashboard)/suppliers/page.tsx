@@ -113,8 +113,8 @@ export default function SuppliersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Поставщики</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Поставщики</h1>
+          <p className="text-xs text-gray-600">
             Управление базой поставщиков
           </p>
         </div>

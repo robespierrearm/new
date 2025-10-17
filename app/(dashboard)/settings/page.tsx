@@ -1,10 +1,12 @@
 export default function SettingsPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900">Настройки</h1>
-      <p className="text-gray-600 mt-2">
-        Настройки системы и профиля (в разработке)
-      </p>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Настройки</h1>
+        <p className="text-xs text-gray-600">
+          Настройки системы и профиля (в разработке)
+        </p>
+      </div>
     </div>
   );
 }

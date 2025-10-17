@@ -61,6 +61,8 @@ export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
 export type SupplierUpdate = Partial<SupplierInsert>;
 
 // Files types
+export type DocumentType = 'тендерная документация' | 'закрывающие документы' | 'прочее';
+
 export interface File {
   id: string;
   name: string;
@@ -69,6 +71,9 @@ export interface File {
   file_size: number | null;
   mime_type: string | null;
   category: string;
+  tender_id: number | null;
+  document_type: DocumentType;
+  uploaded_by: string | null;
   show_on_dashboard: boolean;
   uploaded_at: string;
   updated_at: string;
@@ -81,12 +86,16 @@ export interface FileInsert {
   file_size?: number | null;
   mime_type?: string | null;
   category?: string;
+  tender_id?: number | null;
+  document_type?: DocumentType;
+  uploaded_by?: string | null;
   show_on_dashboard?: boolean;
 }
 
 export interface FileUpdate {
   name?: string;
   category?: string;
+  document_type?: DocumentType;
   show_on_dashboard?: boolean;
 }
 
@@ -97,6 +106,26 @@ export const FILE_CATEGORIES = [
   'документация',
   'прочее',
 ] as const;
+
+export const DOCUMENT_TYPES: DocumentType[] = [
+  'тендерная документация',
+  'закрывающие документы',
+  'прочее',
+];
+
+// Иконки для типов документов
+export const DOCUMENT_TYPE_ICONS: Record<DocumentType, string> = {
+  'тендерная документация': '📄',
+  'закрывающие документы': '🧾',
+  'прочее': '📁',
+};
+
+// Цвета для типов документов
+export const DOCUMENT_TYPE_COLORS: Record<DocumentType, string> = {
+  'тендерная документация': 'bg-blue-100 text-blue-700',
+  'закрывающие документы': 'bg-green-100 text-green-700',
+  'прочее': 'bg-gray-100 text-gray-700',
+};
 
 // Типы для расходов (бухгалтерия)
 export interface Expense {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase, File, FileInsert, FILE_CATEGORIES } from '@/lib/supabase';
+import { supabase, File, FileInsert, FILE_CATEGORIES, DOCUMENT_TYPES, DOCUMENT_TYPE_ICONS, DOCUMENT_TYPE_COLORS, Tender, DocumentType } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,21 +32,28 @@ import { cn } from '@/lib/utils';
 
 const STORAGE_BUCKET = 'files';
 
+type TenderListItem = { id: number; name: string };
+
 export default function FilesPage() {
   const [files, setFiles] = useState<File[]>([]);
+  const [tenders, setTenders] = useState<TenderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [filterDashboard, setFilterDashboard] = useState<string>('all');
+  const [filterDocType, setFilterDocType] = useState<string>('all');
+  const [filterTender, setFilterTender] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Форма загрузки
   const [uploadFile, setUploadFile] = useState<globalThis.File | null>(null);
   const [fileName, setFileName] = useState('');
   const [fileCategory, setFileCategory] = useState<string>('прочее');
+  const [selectedTenderId, setSelectedTenderId] = useState<number | null>(null);
+  const [selectedDocType, setSelectedDocType] = useState<DocumentType>('прочее');
   const [showOnDashboard, setShowOnDashboard] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Загрузка файлов
+  // Загрузка файлов и тендеров
   const loadFiles = async () => {
     setIsLoading(true);
     const { data, error } = await supabase
@@ -62,8 +69,20 @@ export default function FilesPage() {
     setIsLoading(false);
   };
 
+  const loadTenders = async () => {
+    const { data } = await supabase
+      .from('tenders')
+      .select('id, name')
+      .order('created_at', { ascending: false });
+    
+    if (data) {
+      setTenders(data);
+    }
+  };
+
   useEffect(() => {
     loadFiles();
+    loadTenders();
   }, []);
 
   // Загрузка файла
@@ -101,6 +120,9 @@ export default function FilesPage() {
         file_size: uploadFile.size,
         mime_type: uploadFile.type,
         category: fileCategory,
+        tender_id: selectedTenderId,
+        document_type: selectedDocType,
+        uploaded_by: 'Пользователь',
         show_on_dashboard: showOnDashboard,
       };
 
@@ -120,6 +142,8 @@ export default function FilesPage() {
       setUploadFile(null);
       setFileName('');
       setFileCategory('прочее');
+      setSelectedTenderId(null);
+      setSelectedDocType('прочее');
       setShowOnDashboard(false);
       setIsUploadDialogOpen(false);
     } catch (error) {
@@ -199,10 +223,18 @@ export default function FilesPage() {
   // Фильтрация
   const filteredFiles = files.filter((file) => {
     if (filterCategory !== 'all' && file.category !== filterCategory) return false;
-    if (filterDashboard === 'yes' && !file.show_on_dashboard) return false;
-    if (filterDashboard === 'no' && file.show_on_dashboard) return false;
+    if (filterDocType !== 'all' && file.document_type !== filterDocType) return false;
+    if (filterTender !== 'all' && file.tender_id?.toString() !== filterTender) return false;
+    if (searchQuery && !file.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
+
+  // Получить название тендера по ID
+  const getTenderName = (tenderId: number | null) => {
+    if (!tenderId) return '—';
+    const tender = tenders.find(t => t.id === tenderId);
+    return tender?.name || `Тендер #${tenderId}`;
+  };
 
   // Форматирование размера
   const formatSize = (bytes: number | null) => {
@@ -228,8 +260,8 @@ export default function FilesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Файловая система</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Файловая система</h1>
+          <p className="text-xs text-gray-600">
             Управление документами и файлами
           </p>
         </div>
@@ -239,13 +271,57 @@ export default function FilesPage() {
         </Button>
       </div>
 
-      {/* Фильтры */}
-      <div className="mb-6 bg-white p-4 rounded-lg border shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
+      {/* Поиск и фильтры */}
+      <div className="mb-6 bg-white p-4 rounded-lg border shadow-sm space-y-4">
+        <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Фильтры</h3>
+          <h3 className="font-semibold text-gray-900">Поиск и фильтры</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        {/* Поиск */}
+        <div>
+          <Label>Поиск по названию</Label>
+          <Input
+            placeholder="Введите название файла..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label>Тип документа</Label>
+            <Select value={filterDocType} onValueChange={setFilterDocType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все типы</SelectItem>
+                {DOCUMENT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {DOCUMENT_TYPE_ICONS[type]} {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Тендер</Label>
+            <Select value={filterTender} onValueChange={setFilterTender}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все тендеры</SelectItem>
+                {tenders.map((tender) => (
+                  <SelectItem key={tender.id} value={tender.id.toString()}>
+                    {tender.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label>Категория</Label>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
@@ -259,19 +335,6 @@ export default function FilesPage() {
                     {cat}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Показ на дашборде</Label>
-            <Select value={filterDashboard} onValueChange={setFilterDashboard}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все файлы</SelectItem>
-                <SelectItem value="yes">Только на дашборде</SelectItem>
-                <SelectItem value="no">Не на дашборде</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -297,10 +360,10 @@ export default function FilesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Название</TableHead>
-                <TableHead>Категория</TableHead>
+                <TableHead>Тип документа</TableHead>
+                <TableHead>Тендер</TableHead>
                 <TableHead>Размер</TableHead>
                 <TableHead>Дата загрузки</TableHead>
-                <TableHead>Дашборд</TableHead>
                 <TableHead className="text-right">Действия</TableHead>
               </TableRow>
             </TableHeader>
@@ -309,7 +372,7 @@ export default function FilesPage() {
                 <TableRow key={file.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <div className="text-2xl">{DOCUMENT_TYPE_ICONS[file.document_type]}</div>
                       <div>
                         <div>{file.name}</div>
                         <div className="text-xs text-gray-500">{file.original_name}</div>
@@ -317,38 +380,21 @@ export default function FilesPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                      {file.category}
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${DOCUMENT_TYPE_COLORS[file.document_type]}`}>
+                      {file.document_type}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {getTenderName(file.tender_id)}
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">
                     {formatSize(file.file_size)}
                   </TableCell>
                   <TableCell className="text-sm text-gray-600">
-                    {formatDate(file.uploaded_at)}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => toggleDashboard(file)}
-                      className={cn(
-                        'flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors',
-                        file.show_on_dashboard
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      )}
-                    >
-                      {file.show_on_dashboard ? (
-                        <>
-                          <Eye className="h-3 w-3" />
-                          Да
-                        </>
-                      ) : (
-                        <>
-                          <EyeOff className="h-3 w-3" />
-                          Нет
-                        </>
-                      )}
-                    </button>
+                    <div>{formatDate(file.uploaded_at)}</div>
+                    {file.uploaded_by && (
+                      <div className="text-xs text-gray-400">{file.uploaded_by}</div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -410,6 +456,40 @@ export default function FilesPage() {
               />
             </div>
             <div>
+              <Label htmlFor="tender">Тендер (необязательно)</Label>
+              <Select 
+                value={selectedTenderId?.toString() || 'none'} 
+                onValueChange={(val) => setSelectedTenderId(val === 'none' ? null : parseInt(val))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Выберите тендер" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Без тендера</SelectItem>
+                  {tenders.map((tender) => (
+                    <SelectItem key={tender.id} value={tender.id.toString()}>
+                      {tender.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="docType">Тип документа</Label>
+              <Select value={selectedDocType} onValueChange={(val) => setSelectedDocType(val as DocumentType)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {DOCUMENT_TYPE_ICONS[type]} {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="category">Категория</Label>
               <Select value={fileCategory} onValueChange={setFileCategory}>
                 <SelectTrigger className="mt-1">
@@ -423,18 +503,6 @@ export default function FilesPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="dashboard"
-                checked={showOnDashboard}
-                onChange={(e) => setShowOnDashboard(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <Label htmlFor="dashboard" className="cursor-pointer">
-                Отображать на дашборде
-              </Label>
             </div>
           </div>
           <DialogFooter>

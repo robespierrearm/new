@@ -16,6 +16,8 @@ type ArchiveFilter = 'all' | 'completed' | 'lost';
 function TendersContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as TabType | null;
+  const statusParam = searchParams.get('status');
+  const editParam = searchParams.get('edit');
   
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -52,6 +54,17 @@ function TendersContent() {
   useEffect(() => {
     loadTenders();
   }, []);
+
+  // Обработка параметра edit из URL
+  useEffect(() => {
+    if (editParam && tenders.length > 0) {
+      const tenderId = parseInt(editParam, 10);
+      const tender = tenders.find(t => t.id === tenderId);
+      if (tender) {
+        setEditingTender(tender);
+      }
+    }
+  }, [editParam, tenders]);
 
   // Добавление тендера
   const handleAddTender = async (tender: TenderInsert) => {
@@ -190,6 +203,12 @@ function TendersContent() {
   const getFilteredTenders = () => {
     let filtered = [...tenders];
 
+    // Если есть параметр status из URL, фильтруем по нему
+    if (statusParam) {
+      filtered = tenders.filter(t => t.status === statusParam);
+      return filtered;
+    }
+
     switch (activeTab) {
       case 'new':
         filtered = tenders.filter(t => t.status === 'новый');
@@ -238,8 +257,8 @@ function TendersContent() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Тендеры</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Тендеры</h1>
+          <p className="text-xs text-gray-600">
             Управление тендерами и заявками
           </p>
         </div>

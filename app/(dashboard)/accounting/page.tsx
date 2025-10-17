@@ -90,8 +90,8 @@ export default function AccountingPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Заголовок */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Бухгалтерия</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Бухгалтерия</h1>
+        <p className="text-xs text-gray-600">
           Финансовый учёт по выигранным тендерам
         </p>
       </div>

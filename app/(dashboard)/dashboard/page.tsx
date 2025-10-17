@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -63,6 +64,7 @@ const formatTenderDate = (dateString: string | null) => {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [dashboardFiles, setDashboardFiles] = useState<File[]>([]);
   const [tenders, setTenders] = useState<Tender[]>([]);
@@ -171,6 +173,20 @@ export default function DashboardPage() {
     });
   };
 
+  // Функция перехода на страницу тендеров с фильтром
+  const navigateToTenders = (status?: string) => {
+    if (status) {
+      router.push(`/tenders?status=${encodeURIComponent(status)}`);
+    } else {
+      router.push('/tenders');
+    }
+  };
+
+  // Функция перехода на конкретный тендер
+  const navigateToTender = (tenderId: number) => {
+    router.push(`/tenders?edit=${tenderId}`);
+  };
+
   // Динамические данные для трёх основных блоков
   const mainCards = [
     {
@@ -181,6 +197,7 @@ export default function DashboardPage() {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
+      status: 'в работе',
     },
     {
       title: 'На рассмотрении',
@@ -190,6 +207,7 @@ export default function DashboardPage() {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
+      status: 'на рассмотрении',
     },
     {
       title: 'Напоминания',
@@ -199,6 +217,7 @@ export default function DashboardPage() {
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',
+      status: undefined,
     },
   ];
 
@@ -225,23 +244,24 @@ export default function DashboardPage() {
         </div>
 
         {/* Три основных блока */}
-        <div className="grid gap-3 md:grid-cols-3 mb-5">
+        <div className="grid gap-3 md:grid-cols-3 mb-5 max-w-4xl">
           {mainCards.map((card) => {
             const Icon = card.icon;
             return (
               <Card
                 key={card.title}
                 className={`transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer border ${card.borderColor} bg-white`}
+                onClick={() => card.status && navigateToTenders(card.status)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                      <Icon className={`h-5 w-5 ${card.color}`} />
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`p-1.5 rounded-lg ${card.bgColor}`}>
+                      <Icon className={`h-4 w-4 ${card.color}`} />
                     </div>
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="text-xs font-medium text-gray-600">{card.title}</h3>
-                    <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                    <p className="text-xl font-bold text-gray-900">{card.value}</p>
                     <p className="text-xs text-gray-500">{card.description}</p>
                   </div>
                 </CardContent>
@@ -254,10 +274,10 @@ export default function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
           {/* Последние тендеры */}
           <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="border-b px-4 py-3">
+            <CardHeader className="border-b px-4 py-2.5">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Последние тендеры</CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => window.location.href = '/tenders'}>
+                <CardTitle className="text-sm font-semibold text-gray-900">Последние тендеры</CardTitle>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => router.push('/tenders')}>
                   Все тендеры
                   <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
@@ -267,7 +287,11 @@ export default function DashboardPage() {
               {tenders.length > 0 ? (
                 <div className="divide-y">
                   {tenders.map((tender) => (
-                    <div key={tender.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                    <div 
+                      key={tender.id} 
+                      className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => navigateToTender(tender.id)}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm text-gray-900 truncate mb-1">{tender.name}</h4>
@@ -299,13 +323,13 @@ export default function DashboardPage() {
 
           {/* Файлы */}
           <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="border-b px-4 py-3">
+            <CardHeader className="border-b px-4 py-2.5">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <FolderOpen className="h-3.5 w-3.5 text-blue-600" />
                   Файлы
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => window.location.href = '/files'}>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => router.push('/files')}>
                   Все
                   <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>

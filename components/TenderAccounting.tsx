@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { Tender, Expense, ExpenseInsert, supabase } from '@/lib/supabase';
+import { Tender, Expense, ExpenseInsert, supabase, DocumentType } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown, BarChart3, FileText, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TenderDocumentsModal } from '@/components/TenderDocumentsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -23,6 +24,8 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [selectedDocType, setSelectedDocType] = useState<DocumentType>('тендерная документация');
   const [newExpense, setNewExpense] = useState<ExpenseInsert>({
     tender_id: tender.id,
     category: '',
@@ -299,17 +302,49 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
           {/* Детальные расчёты */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-lg border col-span-2">
-              <Button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                size="sm"
-                variant="secondary"
-                className="mb-3 inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-shadow shadow-sm hover:shadow"
-                aria-label="Открыть финансовую сводку"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Финансовая сводка
-              </Button>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  size="sm"
+                  variant="secondary"
+                  className="inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-shadow shadow-sm hover:shadow"
+                  aria-label="Открыть финансовую сводку"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Финансовая сводка
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDocType('тендерная документация');
+                    setDocumentsModalOpen(true);
+                  }}
+                  size="sm"
+                  variant="secondary"
+                  className="inline-flex items-center gap-2 border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-shadow shadow-sm hover:shadow"
+                  aria-label="Тендерная документация"
+                >
+                  <FileText className="h-4 w-4" />
+                  Тендерная документация
+                </Button>
+                
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDocType('закрывающие документы');
+                    setDocumentsModalOpen(true);
+                  }}
+                  size="sm"
+                  variant="secondary"
+                  className="inline-flex items-center gap-2 border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 transition-shadow shadow-sm hover:shadow"
+                  aria-label="Закрывающие документы"
+                >
+                  <Receipt className="h-4 w-4" />
+                  Закрывающие документы
+                </Button>
+              </div>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Доход из контракта:</span>
@@ -523,6 +558,15 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
           </div>
         </div>
       )}
+
+      {/* Модальное окно для документов */}
+      <TenderDocumentsModal
+        open={documentsModalOpen}
+        onOpenChange={setDocumentsModalOpen}
+        tenderId={tender.id}
+        tenderName={tender.name}
+        documentType={selectedDocType}
+      />
     </div>
   );
 }

@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TenderFilesList } from '@/components/TenderFilesList';
 
 interface EditTenderDialogProps {
   tender: Tender;
@@ -46,16 +48,23 @@ export function EditTenderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Редактировать тендер</DialogTitle>
-            <DialogDescription>
-              Измените информацию о тендере
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Редактировать тендер</DialogTitle>
+          <DialogDescription>
+            Измените информацию о тендере и управляйте файлами
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="grid gap-4 py-4">
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">Информация</TabsTrigger>
+            <TabsTrigger value="files">Файлы</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info">
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-name">Название тендера *</Label>
               <Input
@@ -166,19 +175,25 @@ export function EditTenderDialog({
                 />
               </div>
             )}
-          </div>
+              </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Отмена
-            </Button>
-            <Button type="submit">Сохранить</Button>
-          </DialogFooter>
-        </form>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Отмена
+                </Button>
+                <Button type="submit">Сохранить</Button>
+              </DialogFooter>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="files" className="mt-4">
+            <TenderFilesList tenderId={tender.id} tenderStatus={tender.status} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
