@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderOpen,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,11 @@ const menuItems = [
     title: 'Файлы',
     href: '/files',
     icon: FolderOpen,
+  },
+  {
+    title: 'Чат',
+    href: '/chat',
+    icon: MessageSquare,
   },
   {
     title: 'Админка',

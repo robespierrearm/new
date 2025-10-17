@@ -212,3 +212,35 @@ export const EXPENSE_CATEGORIES = [
   'Налоги',
   'Прочее',
 ] as const;
+
+// Messages (сообщения чата)
+export type MessageType = 'message' | 'note' | 'link';
+
+export interface Message {
+  id: number;
+  user_id: number;
+  username: string;
+  message_type: MessageType;
+  content: string;
+  link_url: string | null;
+  note_color: string | null;
+  created_at: string;
+}
+
+export interface MessageInsert {
+  user_id: number;
+  username: string;
+  message_type: MessageType;
+  content: string;
+  link_url?: string | null;
+  note_color?: string | null;
+}
+
+// Цвета для заметок
+export const NOTE_COLORS = [
+  { value: 'yellow', label: 'Желтый', class: 'bg-yellow-100 border-yellow-300' },
+  { value: 'blue', label: 'Синий', class: 'bg-blue-100 border-blue-300' },
+  { value: 'green', label: 'Зеленый', class: 'bg-green-100 border-green-300' },
+  { value: 'red', label: 'Красный', class: 'bg-red-100 border-red-300' },
+  { value: 'purple', label: 'Фиолетовый', class: 'bg-purple-100 border-purple-300' },
+] as const;
