@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Tender, Expense, ExpenseInsert, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface TenderAccountingProps {
   tender: Tender;
@@ -17,6 +19,8 @@ interface TenderAccountingProps {
 
 export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDeleted }: TenderAccountingProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [newExpense, setNewExpense] = useState<ExpenseInsert>({
     tender_id: tender.id,
@@ -32,6 +36,13 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   const taxRate = 0.07; // 7% налог
   const tax = profit > 0 ? profit * taxRate : 0;
   const netProfit = profit - tax;
+  const formattedSummary = useMemo(() => ({
+    income,
+    totalExpenses,
+    profit,
+    tax,
+    netProfit,
+  }), [income, totalExpenses, profit, tax, netProfit]);
 
   // Форматирование суммы
   const formatAmount = (amount: number) => {
@@ -40,6 +51,106 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
       currency: 'RUB',
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  // Генерация PDF-отчёта
+  const buildPdf = () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 40;
+
+    // "Логотип" TenderCRM (текстом)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('TenderCRM', 40, y);
+    y += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Отчёт по тендеру: ${tender.name}`, 40, (y += 18));
+    doc.text(`Дата формирования: ${formatDate(new Date())}`, 40, (y += 16));
+
+    // Сводка
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Финансовая сводка', 40, y);
+    doc.setFont('helvetica', 'normal');
+    y += 16;
+    const summaryRows = [
+      ['Доход', formatCurrency(formattedSummary.income)],
+      ['Расходы', formatCurrency(formattedSummary.totalExpenses)],
+      ['Прибыль', formatCurrency(formattedSummary.profit)],
+      ['Налог (7%)', formatCurrency(formattedSummary.tax)],
+      ['Чистая прибыль', formatCurrency(formattedSummary.netProfit)],
+    ];
+    autoTable(doc, {
+      startY: y,
+      theme: 'striped',
+      head: [['Показатель', 'Значение']],
+      body: summaryRows,
+      styles: { font: 'helvetica' },
+      headStyles: { fillColor: [240, 240, 240] },
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Таблица расходов
+    const afterSummaryY = (doc as any).lastAutoTable?.finalY || 40;
+    const expenseRows = expenses.map((e) => [e.description || '—', e.category, formatCurrency(e.amount)]);
+    autoTable(doc, {
+      startY: afterSummaryY + 24,
+      theme: 'striped',
+      head: [['Поставщик/описание', 'Категория', 'Сумма']],
+      body: expenseRows,
+      styles: { font: 'helvetica' },
+      headStyles: { fillColor: [240, 240, 240] },
+      columnStyles: { 2: { halign: 'right' } },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Итоговая строка с чистой прибылью
+    const afterExpensesY = (doc as any).lastAutoTable?.finalY || afterSummaryY + 24;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Итого (чистая прибыль): ${formatCurrency(formattedSummary.netProfit)}`, 40, afterExpensesY + 24);
+
+    return doc;
+  };
+
+  const handleDownloadPdf = () => {
+    const doc = buildPdf();
+    const safeName = (tender.name || 'тендер').replace(/[^\p{L}\p{N}\s_-]/gu, '').slice(0, 60).trim();
+    const filename = `Отчет_${safeName || 'тендер'}.pdf`;
+    doc.save(filename);
+  };
+
+  const handleSharePdf = async () => {
+    try {
+      setIsSharing(true);
+      const doc = buildPdf();
+      const blob = doc.output('blob');
+      const safeName = (tender.name || 'тендер').replace(/[^\p{L}\p{N}\s_-]/gu, '').slice(0, 60).trim();
+      const filename = `Отчет_${safeName || 'тендер'}.pdf`;
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      if (navigator.share && (navigator as any).canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename, text: `Отчёт по тендеру: ${tender.name}` });
+      } else {
+        // Фоллбек: просто скачать файл, если шаринг недоступен
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось переслать отчёт');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   // Добавление расхода
@@ -136,7 +247,17 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
           {/* Детальные расчёты */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white p-4 rounded-lg border col-span-2">
-              <h4 className="font-semibold text-gray-900 mb-3">📊 Финансовая сводка</h4>
+              <Button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                size="sm"
+                variant="secondary"
+                className="mb-3 inline-flex items-center gap-2 border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 transition-shadow shadow-sm hover:shadow"
+                aria-label="Открыть финансовую сводку"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Финансовая сводка
+              </Button>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Доход из контракта:</span>
@@ -265,6 +386,104 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
           </div>
         </div>
       )}
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 opacity-100 animate-in fade-in duration-200"
+            onClick={() => setIsModalOpen(false)}
+          />
+          <div className="relative w-full sm:max-w-2xl mx-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Финансовая сводка — {tender.name}</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                aria-label="Закрыть"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <span className="text-gray-600">Доход</span>
+                  <span className="font-semibold text-green-600">{formatAmount(formattedSummary.income)}</span>
+                </div>
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <span className="text-gray-600">Расходы</span>
+                  <span className="font-semibold text-red-600">{formatAmount(formattedSummary.totalExpenses)}</span>
+                </div>
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <span className="text-gray-600">Прибыль</span>
+                  <span className={cn(
+                    'font-semibold',
+                    formattedSummary.profit > 0 ? 'text-green-600' : formattedSummary.profit < 0 ? 'text-red-600' : 'text-gray-600'
+                  )}>{formatAmount(formattedSummary.profit)}</span>
+                </div>
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                  <span className="text-gray-600">Налог (7%)</span>
+                  <span className="font-semibold text-orange-600">{formatAmount(formattedSummary.tax)}</span>
+                </div>
+                <div className="flex items-center justify-between bg-gray-100 rounded-lg p-3 sm:col-span-2">
+                  <span className="font-semibold text-gray-900">Чистая прибыль</span>
+                  <span className={cn(
+                    'font-bold',
+                    formattedSummary.netProfit > 0 ? 'text-green-700' : formattedSummary.netProfit < 0 ? 'text-red-700' : 'text-gray-700'
+                  )}>{formatAmount(formattedSummary.netProfit)}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Детализация расходов</h4>
+                {expenses.length === 0 ? (
+                  <p className="text-sm text-gray-500">Расходы не добавлены</p>
+                ) : (
+                  <div className="max-h-64 overflow-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-600">
+                        <tr>
+                          <th className="text-left p-2">Поставщик/описание</th>
+                          <th className="text-left p-2">Категория</th>
+                          <th className="text-right p-2">Сумма</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {expenses.map((e) => (
+                          <tr key={e.id} className="border-t">
+                            <td className="p-2">{e.description || '—'}</td>
+                            <td className="p-2">{e.category}</td>
+                            <td className="p-2 text-right font-medium">{formatAmount(e.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:justify-end pt-2">
+                <Button onClick={() => handleDownloadPdf()} variant="default">Скачать PDF</Button>
+                <Button onClick={() => handleSharePdf()} variant="outline" disabled={isSharing}>{isSharing ? 'Подготовка…' : 'Переслать'}</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString('ru-RU', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    maximumFractionDigits: 0,
+  }).format(amount || 0);
+}
+ 
