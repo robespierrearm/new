@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { Logo } from '@/components/Logo';
 import {
   Home,
   FileText,
@@ -105,8 +106,8 @@ export function AppSidebar() {
         >
           {!isCollapsed ? (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <span className="text-2xl font-black text-white">T</span>
+              <div className="group-hover:scale-110 transition-transform duration-300">
+                <Logo size={40} />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white drop-shadow-lg tracking-tight">
@@ -116,8 +117,8 @@ export function AppSidebar() {
               </div>
             </div>
           ) : (
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300 shadow-lg">
-              <span className="text-2xl font-black text-white">T</span>
+            <div className="mx-auto group-hover:scale-110 transition-transform duration-300">
+              <Logo size={40} />
             </div>
           )}
         </Link>
