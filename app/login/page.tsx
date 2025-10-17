@@ -120,23 +120,23 @@ export default function LoginPage() {
         ))}
       </div>
 
-      <Card className="w-full max-w-md relative z-10 shadow-2xl border-slate-800/50 backdrop-blur-xl bg-slate-900/80 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
+      <Card className="w-full max-w-md relative z-10 shadow-2xl border-slate-800/50 backdrop-blur-xl bg-slate-900/80 overflow-hidden">
         <div className="p-8">
           {/* Светящаяся линия сверху */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500 to-transparent animate-pulse"></div>
 
           {/* Логотип и название */}
-          <div className="text-center mb-10 animate-in fade-in slide-in-from-top duration-500">
+          <div className="text-center mb-10">
             <div className="relative inline-block mb-6">
               <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl blur-xl opacity-50 animate-pulse"></div>
-              <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-2xl shadow-2xl hover:scale-110 transition-transform duration-300 animate-in zoom-in duration-700">
+              <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-2xl shadow-2xl hover:scale-110 transition-transform duration-300">
                 <Building2 className="h-12 w-12 text-white drop-shadow-lg" />
               </div>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500 bg-clip-text text-transparent mb-3 animate-in fade-in slide-in-from-top duration-700" style={{ animationDelay: '200ms' }}>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500 bg-clip-text text-transparent mb-3">
               ИП Чолахян
             </h1>
-            <p className="text-slate-400 text-sm animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>Строительная компания</p>
+            <p className="text-slate-400 text-sm">Строительная компания</p>
             <div className="mt-4 flex items-center justify-center gap-2">
               <div className="h-px w-12 bg-gradient-to-r from-transparent to-orange-500/50"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
@@ -145,15 +145,15 @@ export default function LoginPage() {
           </div>
 
           {/* Форма входа */}
-          <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in duration-700" style={{ animationDelay: '600ms' }}>
+          <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 animate-in shake duration-500 backdrop-blur-sm">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 backdrop-blur-sm">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 animate-pulse" />
                 <span className="text-sm font-medium">{error}</span>
               </div>
             )}
 
-            <div className="space-y-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: '800ms' }}>
+            <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-300 font-medium text-sm flex items-center gap-2">
                 <Mail className="h-4 w-4 text-orange-500" />
                 Email адрес
@@ -175,7 +175,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: '1000ms' }}>
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-slate-300 font-medium text-sm flex items-center gap-2">
                 <Lock className="h-4 w-4 text-orange-500" />
                 Пароль
@@ -197,7 +197,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="relative group animate-in slide-in-from-bottom duration-500" style={{ animationDelay: '1200ms' }}>
+            <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 rounded-xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></div>
               <Button
                 type="submit"
@@ -229,7 +229,7 @@ export default function LoginPage() {
           </form>
 
           {/* Информация */}
-          <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '1400ms' }}>
+          <div className="mt-8 text-center">
             <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mb-3">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-slate-700"></div>
               <span className="uppercase tracking-wider">TenderCRM</span>
