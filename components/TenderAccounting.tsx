@@ -62,21 +62,107 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Рендерим содержимое модалки в изображение, чтобы кириллица сохранилась корректно
-    const target = modalRef.current ?? document.body;
-    const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
+    // Создаём изолированный контейнер без Tailwind, только inline RGB-стилей
+    const container = document.createElement('div');
+    container.id = 'pdf-print';
+    container.style.cssText = [
+      'position: fixed',
+      'left: -10000px',
+      'top: 0',
+      'width: 800px',
+      'background: #ffffff',
+      'color: #111827',
+      'font-family: Arial, Helvetica, sans-serif',
+      'font-size: 12px',
+      'line-height: 1.5',
+      'padding: 24px',
+      'border: 1px solid #e5e7eb',
+      'border-radius: 12px',
+      'box-shadow: none',
+    ].join(';');
 
-    // Рассчитываем масштаб, чтобы картинка уместилась на страницу, сохранив пропорции
-    const imgWidth = pageWidth - 80; // поля
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let y = 40;
-    if (imgHeight > pageHeight - 80) {
-      // Если больше одной страницы — масштабируем по высоте
-      const heightLimitedWidth = ((pageHeight - 80) * canvas.width) / canvas.height;
-      doc.addImage(imgData, 'PNG', 40, y, heightLimitedWidth, pageHeight - 80);
-    } else {
-      doc.addImage(imgData, 'PNG', 40, y, imgWidth, imgHeight);
+    const title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;font-size:16px;margin-bottom:8px;';
+    title.textContent = `TenderCRM — Отчёт по тендеру: ${tender.name}`;
+    container.appendChild(title);
+
+    const dateEl = document.createElement('div');
+    dateEl.style.cssText = 'color:#374151;margin-bottom:16px;';
+    dateEl.textContent = `Дата формирования: ${formatDate(new Date())}`;
+    container.appendChild(dateEl);
+
+    const section1 = document.createElement('div');
+    section1.style.cssText = 'margin-bottom:16px;';
+    const sTable = document.createElement('table');
+    sTable.style.cssText = 'width:100%;border-collapse:collapse;border:1px solid #e5e7eb;';
+    const sHead = document.createElement('thead');
+    sHead.innerHTML = '<tr style="background:#f9fafb;"><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Показатель</th><th style="text-align:right;padding:8px;border-bottom:1px solid #e5e7eb;">Значение</th></tr>';
+    const sBody = document.createElement('tbody');
+    const addRow = (k: string, v: string) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="padding:8px;border-top:1px solid #e5e7eb;">${k}</td><td style="padding:8px;border-top:1px solid #e5e7eb;text-align:right;">${v}</td>`;
+      sBody.appendChild(tr);
+    };
+    addRow('Доход', formatCurrency(formattedSummary.income));
+    addRow('Расходы', formatCurrency(formattedSummary.totalExpenses));
+    addRow('Прибыль', formatCurrency(formattedSummary.profit));
+    addRow('Налог (7%)', formatCurrency(formattedSummary.tax));
+    addRow('Чистая прибыль', formatCurrency(formattedSummary.netProfit));
+    sTable.appendChild(sHead);
+    sTable.appendChild(sBody);
+    section1.appendChild(sTable);
+    container.appendChild(section1);
+
+    const section2 = document.createElement('div');
+    section2.style.cssText = 'margin-top:8px;';
+    const h4 = document.createElement('div');
+    h4.style.cssText = 'font-weight:600;margin-bottom:8px;';
+    h4.textContent = 'Детализация расходов';
+    section2.appendChild(h4);
+
+    const eTable = document.createElement('table');
+    eTable.style.cssText = 'width:100%;border-collapse:collapse;border:1px solid #e5e7eb;';
+    const eHead = document.createElement('thead');
+    eHead.innerHTML = '<tr style="background:#f9fafb;"><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Поставщик/описание</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Категория</th><th style="text-align:right;padding:8px;border-bottom:1px solid #e5e7eb;">Сумма</th></tr>';
+    const eBody = document.createElement('tbody');
+    expenses.forEach((e) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style=\"padding:8px;border-top:1px solid #e5e7eb;\">${(e.description || '—')}</td><td style=\"padding:8px;border-top:1px solid #e5e7eb;\">${e.category}</td><td style=\"padding:8px;border-top:1px solid #e5e7eb;text-align:right;\">${formatCurrency(e.amount)}</td>`;
+      eBody.appendChild(tr);
+    });
+    eTable.appendChild(eHead);
+    eTable.appendChild(eBody);
+    section2.appendChild(eTable);
+    container.appendChild(section2);
+
+    document.body.appendChild(container);
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // Удаляем все внешние стили/стили Tailwind, чтобы исключить lab()/oklch()
+          clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach((el) => el.parentNode?.removeChild(el));
+          // Принудительный базовый фон и цвет
+          (clonedDoc.documentElement as HTMLElement).style.backgroundColor = '#ffffff';
+          (clonedDoc.body as HTMLElement).style.backgroundColor = '#ffffff';
+          (clonedDoc.body as HTMLElement).style.color = '#111827';
+        },
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      const imgWidth = pageWidth - 80;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const y = 40;
+      if (imgHeight > pageHeight - 80) {
+        const heightLimitedWidth = ((pageHeight - 80) * canvas.width) / canvas.height;
+        doc.addImage(imgData, 'PNG', 40, y, heightLimitedWidth, pageHeight - 80);
+      } else {
+        doc.addImage(imgData, 'PNG', 40, y, imgWidth, imgHeight);
+      }
+    } finally {
+      container.remove();
     }
 
     return doc;
