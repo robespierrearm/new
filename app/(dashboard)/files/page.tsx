@@ -112,6 +112,11 @@ export default function FilesPage() {
         return;
       }
 
+      // Получаем имя текущего пользователя
+      const currentUser = typeof window !== 'undefined' 
+        ? JSON.parse(localStorage.getItem('currentUser') || '{}')
+        : {};
+      
       // Сохраняем метаданные в базу
       const fileData: FileInsert = {
         name: fileName.trim(),
@@ -122,7 +127,7 @@ export default function FilesPage() {
         category: fileCategory,
         tender_id: selectedTenderId,
         document_type: selectedDocType,
-        uploaded_by: 'Пользователь',
+        uploaded_by: currentUser.username || 'Пользователь',
         show_on_dashboard: showOnDashboard,
       };
 

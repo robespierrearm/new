@@ -193,9 +193,13 @@ export function AppSidebar() {
               <div key={item.href} className="space-y-1">
                 {/* Основная кнопка Тендеры - кликабельна и открывает все тендеры */}
                 <div className="relative">
-                  <Link href="/tenders" onClick={closeMobileMenu}>
-                    <button
-                      className={cn(
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      closeMobileMenu();
+                      router.push('/tenders');
+                    }}
+                    className={cn(
                         'w-full gap-3 transition-all flex items-center rounded-md text-sm font-medium h-9 px-4',
                         isAllTenders
                           ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
@@ -209,8 +213,7 @@ export function AppSidebar() {
                       {!isCollapsed && (
                         <span className="truncate flex-1 text-left">{item.title}</span>
                       )}
-                    </button>
-                  </Link>
+                  </button>
                   {!isCollapsed && (
                     <button
                       onClick={toggleTenders}
@@ -228,9 +231,13 @@ export function AppSidebar() {
                 {/* Подменю тендеров */}
                 {isTendersOpen && !isCollapsed && (
                   <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-3">
-                    <Link href="/tenders?tab=new" onClick={closeMobileMenu}>
-                      <button
-                        className={cn(
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeMobileMenu();
+                        router.push('/tenders?tab=new');
+                      }}
+                      className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
                           tabParam === 'new'
                             ? 'bg-blue-50 text-blue-700 font-medium'
@@ -238,11 +245,14 @@ export function AppSidebar() {
                         )}
                       >
                         Новые
-                      </button>
-                    </Link>
-                    <Link href="/tenders?tab=review" onClick={closeMobileMenu}>
-                      <button
-                        className={cn(
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeMobileMenu();
+                        router.push('/tenders?tab=review');
+                      }}
+                      className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
                           tabParam === 'review'
                             ? 'bg-blue-50 text-blue-700 font-medium'
@@ -250,11 +260,14 @@ export function AppSidebar() {
                         )}
                       >
                         На рассмотрении
-                      </button>
-                    </Link>
-                    <Link href="/tenders?tab=inwork" onClick={closeMobileMenu}>
-                      <button
-                        className={cn(
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeMobileMenu();
+                        router.push('/tenders?tab=inwork');
+                      }}
+                      className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
                           tabParam === 'inwork'
                             ? 'bg-blue-50 text-blue-700 font-medium'
@@ -262,11 +275,14 @@ export function AppSidebar() {
                         )}
                       >
                         В работе
-                      </button>
-                    </Link>
-                    <Link href="/tenders?tab=archive" onClick={closeMobileMenu}>
-                      <button
-                        className={cn(
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeMobileMenu();
+                        router.push('/tenders?tab=archive');
+                      }}
+                      className={cn(
                           'w-full text-left px-3 py-2 rounded-md text-sm transition-all',
                           tabParam === 'archive'
                             ? 'bg-blue-50 text-blue-700 font-medium'
@@ -274,8 +290,7 @@ export function AppSidebar() {
                         )}
                       >
                         Архив
-                      </button>
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
@@ -284,20 +299,25 @@ export function AppSidebar() {
 
           // Обычные пункты меню
           return (
-            <Link key={item.href} href={item.href} onClick={closeMobileMenu}>
-              <Button
-                variant={isActive ? 'secondary' : 'ghost'}
-                className={cn(
-                  'w-full gap-3 transition-all',
-                  isCollapsed ? 'justify-center px-2' : 'justify-start px-4',
-                  isActive && 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
-                )}
-                title={isCollapsed ? item.title : undefined}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!isCollapsed && <span className="truncate">{item.title}</span>}
-              </Button>
-            </Link>
+            <button
+              key={item.href}
+              onClick={(e) => {
+                e.preventDefault();
+                closeMobileMenu();
+                router.push(item.href);
+              }}
+              className={cn(
+                'flex items-center gap-3 w-full rounded-md text-sm font-medium h-9 px-4 transition-all',
+                isCollapsed ? 'justify-center px-2' : 'justify-start',
+                isActive 
+                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 hover:from-blue-100 hover:to-purple-100 border-l-4 border-blue-600'
+                  : 'hover:bg-secondary/80 text-gray-700'
+              )}
+              title={isCollapsed ? item.title : undefined}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span className="truncate">{item.title}</span>}
+            </button>
           );
         })}
       </nav>

@@ -74,6 +74,11 @@ export function FileUploadDialog({
         }
       }
 
+      // Получаем имя текущего пользователя
+      const currentUser = typeof window !== 'undefined' 
+        ? JSON.parse(localStorage.getItem('currentUser') || '{}')
+        : {};
+      
       // Сохраняем метаданные в таблицу files
       const fileData: FileInsert = {
         name: fileName,
@@ -84,7 +89,7 @@ export function FileUploadDialog({
         tender_id: tenderId || null,
         document_type: selectedDocType,
         category: 'документация',
-        uploaded_by: 'Пользователь', // TODO: добавить реальную авторизацию
+        uploaded_by: currentUser.username || 'Пользователь',
       };
 
       const { error: dbError } = await supabase
