@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase, File, DocumentType, DOCUMENT_TYPE_ICONS, DOCUMENT_TYPE_COLORS } from '@/lib/supabase';
+import { supabase, File, DocumentType, DOCUMENT_TYPE_ICONS, DOCUMENT_TYPE_COLORS, TenderLink, TenderLinkInsert } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FileUploadDialog } from '@/components/FileUploadDialog';
-import { Download, Trash2, Plus, FileText } from 'lucide-react';
+import { Download, Trash2, Plus, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface TenderFilesListProps {
@@ -15,9 +19,17 @@ interface TenderFilesListProps {
 
 export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps) {
   const [files, setFiles] = useState<File[]>([]);
+  const [links, setLinks] = useState<TenderLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isAddLinkDialogOpen, setIsAddLinkDialogOpen] = useState(false);
   const [uploadDocType, setUploadDocType] = useState<DocumentType>('тендерная документация');
+  const [linkDocType, setLinkDocType] = useState<DocumentType>('тендерная документация');
+  const [linkForm, setLinkForm] = useState({
+    name: '',
+    url: '',
+    description: '',
+  });
 
   // Загрузка файлов
   const loadFiles = async () => {
@@ -34,8 +46,22 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
     setIsLoading(false);
   };
 
+  // Загрузка ссылок
+  const loadLinks = async () => {
+    const { data, error } = await supabase
+      .from('tender_links')
+      .select('*')
+      .eq('tender_id', tenderId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setLinks(data);
+    }
+  };
+
   useEffect(() => {
     loadFiles();
+    loadLinks();
   }, [tenderId]);
 
   // Скачивание файла
@@ -88,6 +114,56 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
     }
   };
 
+  // Добавление ссылки
+  const handleAddLink = async () => {
+    if (!linkForm.name || !linkForm.url) {
+      alert('Заполните название и URL ссылки');
+      return;
+    }
+
+    try {
+      const linkData: TenderLinkInsert = {
+        tender_id: tenderId,
+        name: linkForm.name,
+        url: linkForm.url,
+        document_type: linkDocType,
+        description: linkForm.description || null,
+      };
+
+      const { error } = await supabase
+        .from('tender_links')
+        .insert([linkData]);
+
+      if (error) throw error;
+
+      setLinkForm({ name: '', url: '', description: '' });
+      setIsAddLinkDialogOpen(false);
+      loadLinks();
+    } catch (error: any) {
+      console.error('Ошибка добавления ссылки:', error);
+      alert(`Ошибка добавления ссылки: ${error.message}`);
+    }
+  };
+
+  // Удаление ссылки
+  const handleDeleteLink = async (link: TenderLink) => {
+    if (!confirm(`Удалить ссылку "${link.name}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('tender_links')
+        .delete()
+        .eq('id', link.id);
+
+      if (error) throw error;
+
+      loadLinks();
+    } catch (error: any) {
+      console.error('Ошибка удаления ссылки:', error);
+      alert(`Ошибка удаления ссылки: ${error.message}`);
+    }
+  };
+
   // Форматирование даты
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ru-RU', {
@@ -111,6 +187,11 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
   const tenderDocs = files.filter(f => f.document_type === 'тендерная документация');
   const closingDocs = files.filter(f => f.document_type === 'закрывающие документы');
   const otherDocs = files.filter(f => f.document_type === 'прочее');
+
+  // Фильтрация ссылок по типу
+  const tenderLinks = links.filter(l => l.document_type === 'тендерная документация');
+  const closingLinks = links.filter(l => l.document_type === 'закрывающие документы');
+  const otherLinks = links.filter(l => l.document_type === 'прочее');
 
   // Проверка, можно ли загружать закрывающие документы
   const canUploadClosingDocs = tenderStatus === 'победа' || tenderStatus === 'в работе' || tenderStatus === 'завершён';
@@ -193,24 +274,96 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
         <TabsContent value="tender" className="space-y-3 mt-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-semibold text-gray-700">Тендерная документация</h3>
-            <Button
-              size="sm"
-              onClick={() => {
-                setUploadDocType('тендерная документация');
-                setIsUploadDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Добавить
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  setUploadDocType('тендерная документация');
+                  setIsUploadDialogOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Файл
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setLinkDocType('тендерная документация');
+                  setIsAddLinkDialogOpen(true);
+                }}
+              >
+                <LinkIcon className="h-4 w-4 mr-1" />
+                Ссылка
+              </Button>
+            </div>
           </div>
-          {tenderDocs.length > 0 ? (
+
+          {/* Ссылки */}
+          {tenderLinks.length > 0 && (
             <div className="space-y-2">
+              <h4 className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                <LinkIcon className="h-3 w-3" />
+                Ссылки ({tenderLinks.length})
+              </h4>
+              {tenderLinks.map((link) => (
+                <Card key={link.id} className="p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-blue-100 flex-shrink-0">
+                      <LinkIcon className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-sm text-gray-900">{link.name}</h5>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline block truncate mt-1"
+                      >
+                        {link.url}
+                      </a>
+                      {link.description && (
+                        <p className="text-xs text-gray-500 mt-1">{link.description}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(link.url, '_blank')}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteLink(link)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Файлы */}
+          {tenderDocs.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-medium text-gray-600 flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                Файлы ({tenderDocs.length})
+              </h4>
               {tenderDocs.map((file) => (
                 <FileCard key={file.id} file={file} />
               ))}
             </div>
-          ) : (
+          )}
+
+          {tenderDocs.length === 0 && tenderLinks.length === 0 && (
             <EmptyState message="Нет тендерной документации" />
           )}
         </TabsContent>
@@ -281,6 +434,71 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
         documentType={uploadDocType}
         onUploadComplete={loadFiles}
       />
+
+      {/* Диалог добавления ссылки */}
+      <Dialog open={isAddLinkDialogOpen} onOpenChange={setIsAddLinkDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LinkIcon className="h-5 w-5" />
+              Добавить ссылку
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="link-name">Название ссылки *</Label>
+              <Input
+                id="link-name"
+                value={linkForm.name}
+                onChange={(e) => setLinkForm({ ...linkForm, name: e.target.value })}
+                placeholder="Техническое задание"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="link-url">URL *</Label>
+              <Input
+                id="link-url"
+                type="url"
+                value={linkForm.url}
+                onChange={(e) => setLinkForm({ ...linkForm, url: e.target.value })}
+                placeholder="https://example.com/document.pdf"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="link-description">Описание (необязательно)</Label>
+              <Textarea
+                id="link-description"
+                value={linkForm.description}
+                onChange={(e) => setLinkForm({ ...linkForm, description: e.target.value })}
+                placeholder="Краткое описание документа..."
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddLinkDialogOpen(false);
+                  setLinkForm({ name: '', url: '', description: '' });
+                }}
+              >
+                Отмена
+              </Button>
+              <Button onClick={handleAddLink}>
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

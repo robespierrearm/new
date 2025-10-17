@@ -9,6 +9,7 @@ import { AddTenderDialog } from '@/components/AddTenderDialog';
 import { EditTenderDialog } from '@/components/EditTenderDialog';
 import { TenderStatusChanger } from '@/components/TenderStatusChanger';
 import { PlatformButton } from '@/components/PlatformButton';
+import { TenderCardExpanded } from '@/components/TenderCardExpanded';
 import { Pencil, Trash2, Calendar, DollarSign, FileText } from 'lucide-react';
 
 type TabType = 'all' | 'new' | 'review' | 'inwork' | 'archive';
@@ -26,6 +27,7 @@ function TendersContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>(tabParam || 'all');
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>('all');
+  const [expandedTenderId, setExpandedTenderId] = useState<number | null>(null);
 
   // Обновляем activeTab при изменении URL
   useEffect(() => {
@@ -325,41 +327,56 @@ function TendersContent() {
       ) : (
         <div className="grid gap-4">
           {filteredTenders.map((tender) => (
-            <Card key={tender.id} className="p-4 hover:shadow-lg transition-shadow">
+            <Card 
+              key={tender.id} 
+              className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => setExpandedTenderId(expandedTenderId === tender.id ? null : tender.id)}
+            >
               <div className="flex flex-col gap-3">
                 {/* Заголовок и действия */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       <h3 className="font-semibold text-base text-gray-900 truncate">{tender.name}</h3>
                       <PlatformButton link={tender.link} />
                     </div>
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        tender.status
-                      )}`}
-                    >
-                      {STATUS_LABELS[tender.status]}
-                    </span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          tender.status
+                        )}`}
+                      >
+                        {STATUS_LABELS[tender.status]}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingTender(tender)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteTender(tender.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {/* Смена статуса */}
+                    <div className="hidden sm:block">
+                      <TenderStatusChanger
+                        tender={tender}
+                        onStatusChange={handleStatusChange}
+                      />
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingTender(tender)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteTender(tender.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -402,15 +419,21 @@ function TendersContent() {
                   </div>
                 </div>
 
-                {/* Смена статуса */}
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-gray-500 mb-2">Смена статуса:</p>
+                {/* Смена статуса на мобильных */}
+                <div className="sm:hidden">
                   <TenderStatusChanger
                     tender={tender}
                     onStatusChange={handleStatusChange}
                   />
                 </div>
               </div>
+
+              {/* Раскрывающееся меню */}
+              <TenderCardExpanded
+                tender={tender}
+                isExpanded={expandedTenderId === tender.id}
+                onToggle={() => setExpandedTenderId(expandedTenderId === tender.id ? null : tender.id)}
+              />
             </Card>
           ))}
         </div>

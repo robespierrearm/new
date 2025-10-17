@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { Tender, Expense, ExpenseInsert, supabase, DocumentType } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,10 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>('тендерная документация');
+  const [materialCounts, setMaterialCounts] = useState({
+    'тендерная документация': 0,
+    'закрывающие документы': 0,
+  });
   const [newExpense, setNewExpense] = useState<ExpenseInsert>({
     tender_id: tender.id,
     category: '',
@@ -57,6 +61,57 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  // Загрузка счетчиков материалов
+  const loadMaterialCounts = async () => {
+    try {
+      // Загружаем файлы
+      const { data: files } = await supabase
+        .from('files')
+        .select('document_type')
+        .eq('tender_id', tender.id);
+
+      // Загружаем ссылки
+      const { data: links } = await supabase
+        .from('tender_links')
+        .select('document_type')
+        .eq('tender_id', tender.id);
+
+      // Считаем материалы по типам
+      const counts = {
+        'тендерная документация': 0,
+        'закрывающие документы': 0,
+      };
+
+      // Считаем файлы
+      files?.forEach(file => {
+        if (file.document_type === 'тендерная документация') {
+          counts['тендерная документация']++;
+        } else if (file.document_type === 'закрывающие документы') {
+          counts['закрывающие документы']++;
+        }
+      });
+
+      // Считаем ссылки
+      links?.forEach(link => {
+        if (link.document_type === 'тендерная документация') {
+          counts['тендерная документация']++;
+        } else if (link.document_type === 'закрывающие документы') {
+          counts['закрывающие документы']++;
+        }
+      });
+
+      setMaterialCounts(counts);
+    } catch (error) {
+      console.error('Ошибка загрузки счетчиков:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadMaterialCounts();
+    }
+  }, [isOpen, tender.id]);
 
   // Генерация PDF-отчёта
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -332,6 +387,9 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
                 >
                   <FileText className="h-4 w-4" />
                   Тендерная документация
+                  {materialCounts['тендерная документация'] > 0 && (
+                    <span className="ml-1">({materialCounts['тендерная документация']})</span>
+                  )}
                 </Button>
                 
                 <Button
@@ -347,6 +405,9 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
                 >
                   <Receipt className="h-4 w-4" />
                   Закрывающие документы
+                  {materialCounts['закрывающие документы'] > 0 && (
+                    <span className="ml-1">({materialCounts['закрывающие документы']})</span>
+                  )}
                 </Button>
               </div>
               <div className="space-y-2">
@@ -570,6 +631,7 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
         tenderId={tender.id}
         tenderName={tender.name}
         documentType={selectedDocType}
+        onMaterialsChange={loadMaterialCounts}
       />
     </div>
   );

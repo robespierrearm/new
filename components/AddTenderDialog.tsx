@@ -28,6 +28,7 @@ export function AddTenderDialog({
   const [formData, setFormData] = useState<TenderInsert>({
     name: '',
     link: '',
+    region: '',
     publication_date: '',
     submission_date: '',
     submission_deadline: '',
@@ -51,6 +52,7 @@ export function AddTenderDialog({
     setFormData({
       name: '',
       link: '',
+      region: '',
       publication_date: new Date().toISOString().split('T')[0],
       submission_date: '',
       submission_deadline: '',
@@ -97,6 +99,22 @@ export function AddTenderDialog({
                 }
                 placeholder="https://..."
               />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="region">Регион / Адрес</Label>
+              <Input
+                id="region"
+                type="text"
+                value={formData.region || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, region: e.target.value })
+                }
+                placeholder="Москва, Россия"
+              />
+              <p className="text-xs text-gray-500">
+                Укажите регион или адрес доставки
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

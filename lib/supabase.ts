@@ -10,6 +10,7 @@ export interface Tender {
   id: number;
   name: string;
   link: string | null;
+  region: string | null; // Регион / Адрес
   publication_date: string;
   submission_date: string | null;
   submission_deadline: string | null;
@@ -90,6 +91,26 @@ export interface FileInsert {
   document_type?: DocumentType;
   uploaded_by?: string | null;
   show_on_dashboard?: boolean;
+}
+
+// Tender Links (ссылки в тендерной документации)
+export interface TenderLink {
+  id: number;
+  tender_id: number;
+  name: string;
+  url: string;
+  document_type: DocumentType;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TenderLinkInsert {
+  tender_id: number;
+  name: string;
+  url: string;
+  document_type?: DocumentType;
+  description?: string | null;
 }
 
 export interface FileUpdate {

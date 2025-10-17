@@ -91,6 +91,22 @@ export function EditTenderDialog({
               />
             </div>
 
+            <div className="grid gap-2">
+              <Label htmlFor="edit-region">Регион / Адрес</Label>
+              <Input
+                id="edit-region"
+                type="text"
+                value={formData.region || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, region: e.target.value })
+                }
+                placeholder="Москва, Россия"
+              />
+              <p className="text-xs text-gray-500">
+                Укажите регион или адрес доставки
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-publication_date">Дата публикации</Label>
