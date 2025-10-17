@@ -21,6 +21,7 @@ import {
   ChevronRight,
   FolderOpen,
   MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,11 @@ const menuItems = [
     title: 'Чат',
     href: '/chat',
     icon: MessageSquare,
+  },
+  {
+    title: 'ИИ-помощник',
+    href: '/ai',
+    icon: Sparkles,
   },
   {
     title: 'Админка',
