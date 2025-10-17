@@ -334,12 +334,12 @@ export default function DashboardPage() {
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
           {/* Последние тендеры */}
           <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="border-b px-4 py-2.5">
+            <CardHeader className="border-b px-3 py-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-gray-900">Последние тендеры</CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => router.push('/tenders')}>
-                  Все тендеры
-                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                <CardTitle className="text-xs font-semibold text-gray-900">Последние тендеры</CardTitle>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-6 text-xs px-2" onClick={() => router.push('/tenders')}>
+                  Все
+                  <ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>
               </div>
             </CardHeader>
@@ -383,15 +383,15 @@ export default function DashboardPage() {
 
           {/* Файлы */}
           <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="border-b px-4 py-2.5">
+            <CardHeader className="border-b px-3 py-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <FolderOpen className="h-3.5 w-3.5 text-blue-600" />
+                <CardTitle className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                  <FolderOpen className="h-3 w-3 text-blue-600" />
                   Файлы
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-7 text-xs" onClick={() => router.push('/files')}>
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-6 text-xs px-2" onClick={() => router.push('/files')}>
                   Все
-                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  <ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>
               </div>
             </CardHeader>
