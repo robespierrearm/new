@@ -412,6 +412,18 @@ export default function FilesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => toggleDashboard(file)}
+                        title={file.show_on_dashboard ? "Скрыть с дашборда" : "Показать на дашборде"}
+                      >
+                        {file.show_on_dashboard ? (
+                          <EyeOff className="h-4 w-4 text-orange-600" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-green-600" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDownload(file)}
                         title="Скачать"
                       >
