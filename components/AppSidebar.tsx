@@ -128,7 +128,7 @@ export function AppSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-40 flex h-screen flex-col border-r bg-white shadow-lg transition-all duration-300 md:translate-x-0 overflow-hidden",
+          "fixed md:static inset-y-0 left-0 z-40 flex h-screen flex-col border-r bg-white shadow-lg transition-all duration-300 md:translate-x-0",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "md:w-20" : "md:w-64",
           "w-64"
@@ -177,7 +177,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4 overflow-y-auto pb-20 md:pb-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href === '/tenders' && pathname.startsWith('/tenders'));
@@ -303,7 +303,7 @@ export function AppSidebar() {
       </nav>
 
       {/* User info and Logout */}
-      <div className="border-t p-4 bg-gradient-to-r from-gray-50 to-gray-100 md:relative absolute bottom-0 left-0 right-0">
+      <div className="border-t p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex-shrink-0">
         {!isCollapsed ? (
           <div className="space-y-3">
             {/* Имя пользователя */}
