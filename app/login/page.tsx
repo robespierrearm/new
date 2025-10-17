@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [particles, setParticles] = useState<Array<{ left: string; top: string; delay: string; duration: string }>>([]);
+
+  // Генерируем частицы только на клиенте
+  useEffect(() => {
+    const generatedParticles = [...Array(20)].map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 3}s`,
+      duration: `${2 + Math.random() * 3}s`,
+    }));
+    setParticles(generatedParticles);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,109 +93,162 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Анимированные декоративные элементы */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Анимированная сетка */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+
+      {/* Анимированные светящиеся элементы */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-orange-200/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow-200/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-20 left-10 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Анимированные строительные элементы */}
-      <div className="absolute inset-0 pointer-events-none opacity-10">
-        <div className="absolute top-10 right-20 text-orange-600 animate-bounce" style={{ animationDuration: '3s' }}>
-          <Building2 className="h-16 w-16" />
-        </div>
-        <div className="absolute bottom-32 left-20 text-amber-600 animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}>
-          <Building2 className="h-12 w-12" />
-        </div>
+      {/* Плавающие частицы */}
+      <div className="absolute inset-0 pointer-events-none">
+        {particles.map((particle, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-orange-500/30 rounded-full animate-pulse"
+            style={{
+              left: particle.left,
+              top: particle.top,
+              animationDelay: particle.delay,
+              animationDuration: particle.duration,
+            }}
+          />
+        ))}
       </div>
 
-      <Card className="w-full max-w-md relative z-10 shadow-2xl border-orange-200/50 backdrop-blur-sm bg-white/95 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <Card className="w-full max-w-md relative z-10 shadow-2xl border-slate-800/50 backdrop-blur-xl bg-slate-900/80 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden">
         <div className="p-8">
+          {/* Светящаяся линия сверху */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500 to-transparent animate-pulse"></div>
+
           {/* Логотип и название */}
-          <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-500">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl mb-4 shadow-lg hover:scale-110 transition-transform duration-300 animate-in zoom-in duration-700">
-              <Building2 className="h-10 w-10 text-white animate-pulse" style={{ animationDuration: '3s' }} />
+          <div className="text-center mb-10 animate-in fade-in slide-in-from-top duration-500">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl blur-xl opacity-50 animate-pulse"></div>
+              <div className="relative inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 rounded-2xl shadow-2xl hover:scale-110 transition-transform duration-300 animate-in zoom-in duration-700">
+                <Building2 className="h-12 w-12 text-white drop-shadow-lg" />
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-in fade-in slide-in-from-top duration-700" style={{ animationDelay: '200ms' }}>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500 bg-clip-text text-transparent mb-3 animate-in fade-in slide-in-from-top duration-700" style={{ animationDelay: '200ms' }}>
               ИП Чолахян
             </h1>
-            <p className="text-gray-600 animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>Строительная компания</p>
+            <p className="text-slate-400 text-sm animate-in fade-in duration-700" style={{ animationDelay: '400ms' }}>Строительная компания</p>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-orange-500/50"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-orange-500/50"></div>
+            </div>
           </div>
 
           {/* Форма входа */}
           <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in duration-700" style={{ animationDelay: '600ms' }}>
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700 animate-in shake duration-500">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400 animate-in shake duration-500 backdrop-blur-sm">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 animate-pulse" />
-                <span className="text-sm">{error}</span>
+                <span className="text-sm font-medium">{error}</span>
               </div>
             )}
 
             <div className="space-y-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: '800ms' }}>
-              <Label htmlFor="email" className="text-gray-700 font-medium">
-                Email
+              <Label htmlFor="email" className="text-slate-300 font-medium text-sm flex items-center gap-2">
+                <Mail className="h-4 w-4 text-orange-500" />
+                Email адрес
               </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Введите email"
-                  className="pl-10 h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
-                  required
-                />
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="h-14 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/50 rounded-xl pl-4 pr-4 transition-all duration-300 hover:bg-slate-800/70 focus:bg-slate-800"
+                    required
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500 scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 rounded-full"></div>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2 animate-in slide-in-from-left duration-500" style={{ animationDelay: '1000ms' }}>
-              <Label htmlFor="password" className="text-gray-700 font-medium">
+              <Label htmlFor="password" className="text-slate-300 font-medium text-sm flex items-center gap-2">
+                <Lock className="h-4 w-4 text-orange-500" />
                 Пароль
               </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Введите пароль"
-                  className="pl-10 h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500 transition-all duration-300"
-                  required
-                />
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••"
+                    className="h-14 bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/50 rounded-xl pl-4 pr-4 transition-all duration-300 hover:bg-slate-800/70 focus:bg-slate-800"
+                    required
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500 scale-x-0 group-focus-within:scale-x-100 transition-transform duration-300 rounded-full"></div>
+                </div>
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-in slide-in-from-bottom duration-500"
-              style={{ animationDelay: '1200ms' }}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  Вход...
+            <div className="relative group animate-in slide-in-from-bottom duration-500" style={{ animationDelay: '1200ms' }}>
+              <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 rounded-xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="relative w-full h-14 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 hover:from-orange-600 hover:via-amber-600 hover:to-orange-700 text-white font-bold shadow-2xl transition-all duration-300 hover:scale-[1.02] rounded-xl overflow-hidden group"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                <span className="relative flex items-center justify-center gap-3">
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="font-semibold">Вход в систему...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-5 w-5" />
+                      <span className="font-semibold">Войти в систему</span>
+                      <svg className="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
                 </span>
-              ) : (
-                'Войти в систему'
-              )}
-            </Button>
+              </Button>
+            </div>
           </form>
 
           {/* Информация */}
-          <div className="mt-6 text-center animate-in fade-in duration-700" style={{ animationDelay: '1400ms' }}>
-            <p className="text-sm text-gray-500">
+          <div className="mt-8 text-center animate-in fade-in duration-700" style={{ animationDelay: '1400ms' }}>
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 mb-3">
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-slate-700"></div>
+              <span className="uppercase tracking-wider">TenderCRM</span>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-slate-700"></div>
+            </div>
+            <p className="text-sm text-slate-400 mb-3">
               Система управления тендерами
             </p>
-            <div className="mt-2 flex items-center justify-center gap-2 text-xs text-gray-400">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+              <div className="relative">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+              </div>
               <span>Защищенное соединение</span>
             </div>
           </div>
+
+          {/* Светящаяся линия снизу */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent"></div>
         </div>
       </Card>
     </div>
