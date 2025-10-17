@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase, Tender, TenderInsert, STATUS_LABELS } from '@/lib/supabase';
+import { logActivity, ACTION_TYPES } from '@/lib/activityLogger';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AddTenderDialog } from '@/components/AddTenderDialog';
@@ -87,6 +88,18 @@ function TendersContent() {
       console.error('Ошибка добавления тендера:', error?.message || error, error);
       alert(error?.message || 'Ошибка при добавлении тендера');
     } else {
+      // Логируем добавление тендера
+      await logActivity(
+        `Добавлен тендер: ${tender.name}`,
+        ACTION_TYPES.TENDER_ADD,
+        { 
+          tender_name: tender.name,
+          region: tender.region,
+          status: tender.status,
+          start_price: tender.start_price
+        }
+      );
+      
       loadTenders();
       setIsAddDialogOpen(false);
     }
@@ -103,6 +116,17 @@ function TendersContent() {
       console.error('Ошибка обновления тендера:', error);
       alert('Ошибка при обновлении тендера');
     } else {
+      // Логируем редактирование тендера
+      await logActivity(
+        `Отредактирован тендер: ${updates.name || editingTender?.name || 'ID ' + id}`,
+        ACTION_TYPES.TENDER_EDIT,
+        { 
+          tender_id: id,
+          tender_name: updates.name || editingTender?.name,
+          changes: updates
+        }
+      );
+      
       loadTenders();
       setEditingTender(null);
     }
@@ -110,6 +134,8 @@ function TendersContent() {
 
   // Удаление тендера
   const handleDeleteTender = async (id: number) => {
+    const tenderToDelete = tenders.find(t => t.id === id);
+    
     if (!confirm('Вы уверены, что хотите удалить этот тендер?')) {
       return;
     }
@@ -120,6 +146,18 @@ function TendersContent() {
       console.error('Ошибка удаления тендера:', error);
       alert('Ошибка при удалении тендера');
     } else {
+      // Логируем удаление тендера
+      await logActivity(
+        `Удален тендер: ${tenderToDelete?.name || 'ID ' + id}`,
+        ACTION_TYPES.TENDER_DELETE,
+        { 
+          tender_id: id,
+          tender_name: tenderToDelete?.name,
+          region: tenderToDelete?.region,
+          status: tenderToDelete?.status
+        }
+      );
+      
       loadTenders();
     }
   };
@@ -130,6 +168,9 @@ function TendersContent() {
     newStatus: Tender['status'],
     additionalData?: Partial<Tender>
   ) => {
+    const tender = tenders.find(t => t.id === tenderId);
+    const oldStatus = tender?.status;
+    
     const updateData: Partial<Tender> = {
       status: newStatus,
       ...additionalData,
@@ -144,6 +185,19 @@ function TendersContent() {
       console.error('Ошибка смены статуса:', error);
       throw error;
     }
+
+    // Логируем смену статуса
+    await logActivity(
+      `Изменен статус тендера "${tender?.name || 'ID ' + tenderId}": ${oldStatus} → ${newStatus}`,
+      ACTION_TYPES.TENDER_STATUS_CHANGE,
+      { 
+        tender_id: tenderId,
+        tender_name: tender?.name,
+        old_status: oldStatus,
+        new_status: newStatus,
+        additional_data: additionalData
+      }
+    );
 
     // Автоматическое создание записи в бухгалтерии при переходе в "Победа"
     if (newStatus === 'победа') {
