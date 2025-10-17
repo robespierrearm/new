@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { AppSidebar } from '@/components/AppSidebar';
+import { ActivityTracker } from '@/components/ActivityTracker';
 
 export default function DashboardLayout({
   children,
@@ -8,6 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex h-screen overflow-hidden">
+      <ActivityTracker />
       <Suspense fallback={
         <div className="w-64 border-r bg-white shadow-lg">
           <div className="flex h-20 items-center justify-center border-b bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700">
