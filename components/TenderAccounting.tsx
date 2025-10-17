@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Tender, Expense, ExpenseInsert, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown, BarChar
 import { cn } from '@/lib/utils';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 interface TenderAccountingProps {
   tender: Tender;
@@ -54,70 +55,35 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   };
 
   // Генерация PDF-отчёта
-  const buildPdf = () => {
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  const buildPdf = async () => {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Рендерим содержимое модалки в изображение, чтобы кириллица сохранилась корректно
+    const target = modalRef.current ?? document.body;
+    const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+
+    // Рассчитываем масштаб, чтобы картинка уместилась на страницу, сохранив пропорции
+    const imgWidth = pageWidth - 80; // поля
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let y = 40;
-
-    // "Логотип" TenderCRM (текстом)
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('TenderCRM', 40, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Отчёт по тендеру: ${tender.name}`, 40, (y += 18));
-    doc.text(`Дата формирования: ${formatDate(new Date())}`, 40, (y += 16));
-
-    // Сводка
-    y += 12;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text('Финансовая сводка', 40, y);
-    doc.setFont('helvetica', 'normal');
-    y += 16;
-    const summaryRows = [
-      ['Доход', formatCurrency(formattedSummary.income)],
-      ['Расходы', formatCurrency(formattedSummary.totalExpenses)],
-      ['Прибыль', formatCurrency(formattedSummary.profit)],
-      ['Налог (7%)', formatCurrency(formattedSummary.tax)],
-      ['Чистая прибыль', formatCurrency(formattedSummary.netProfit)],
-    ];
-    autoTable(doc, {
-      startY: y,
-      theme: 'striped',
-      head: [['Показатель', 'Значение']],
-      body: summaryRows,
-      styles: { font: 'helvetica' },
-      headStyles: { fillColor: [240, 240, 240] },
-      columnStyles: { 1: { halign: 'right' } },
-      margin: { left: 40, right: 40 },
-    });
-
-    // Таблица расходов
-    const afterSummaryY = (doc as any).lastAutoTable?.finalY || 40;
-    const expenseRows = expenses.map((e) => [e.description || '—', e.category, formatCurrency(e.amount)]);
-    autoTable(doc, {
-      startY: afterSummaryY + 24,
-      theme: 'striped',
-      head: [['Поставщик/описание', 'Категория', 'Сумма']],
-      body: expenseRows,
-      styles: { font: 'helvetica' },
-      headStyles: { fillColor: [240, 240, 240] },
-      columnStyles: { 2: { halign: 'right' } },
-      margin: { left: 40, right: 40 },
-    });
-
-    // Итоговая строка с чистой прибылью
-    const afterExpensesY = (doc as any).lastAutoTable?.finalY || afterSummaryY + 24;
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Итого (чистая прибыль): ${formatCurrency(formattedSummary.netProfit)}`, 40, afterExpensesY + 24);
+    if (imgHeight > pageHeight - 80) {
+      // Если больше одной страницы — масштабируем по высоте
+      const heightLimitedWidth = ((pageHeight - 80) * canvas.width) / canvas.height;
+      doc.addImage(imgData, 'PNG', 40, y, heightLimitedWidth, pageHeight - 80);
+    } else {
+      doc.addImage(imgData, 'PNG', 40, y, imgWidth, imgHeight);
+    }
 
     return doc;
   };
 
-  const handleDownloadPdf = () => {
-    const doc = buildPdf();
+  const handleDownloadPdf = async () => {
+    const doc = await buildPdf();
     const safeName = (tender.name || 'тендер').replace(/[^\p{L}\p{N}\s_-]/gu, '').slice(0, 60).trim();
     const filename = `Отчет_${safeName || 'тендер'}.pdf`;
     doc.save(filename);
@@ -126,7 +92,7 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
   const handleSharePdf = async () => {
     try {
       setIsSharing(true);
-      const doc = buildPdf();
+      const doc = await buildPdf();
       const blob = doc.output('blob');
       const safeName = (tender.name || 'тендер').replace(/[^\p{L}\p{N}\s_-]/gu, '').slice(0, 60).trim();
       const filename = `Отчет_${safeName || 'тендер'}.pdf`;
@@ -393,7 +359,7 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
             className="absolute inset-0 bg-black/40 opacity-100 animate-in fade-in duration-200"
             onClick={() => setIsModalOpen(false)}
           />
-          <div className="relative w-full sm:max-w-2xl mx-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
+          <div ref={modalRef} className="relative w-full sm:max-w-2xl mx-auto bg-white rounded-t-2xl sm:rounded-2xl shadow-xl p-4 sm:p-6 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Финансовая сводка — {tender.name}</h3>
               <button
