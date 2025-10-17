@@ -1,7 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://pfxzckysajoeuafisfym.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeHpja3lzYWpvZXVhZmlzZnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjUzODgsImV4cCI6MjA3NTE0MTM4OH0.VK-G25BzsA72qaDm-wQtEHbnwgrShmRZzDYHaZPTmOo';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Не заданы переменные окружения NEXT_PUBLIC_SUPABASE_URL и/или NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

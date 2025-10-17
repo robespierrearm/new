@@ -1,7 +1,13 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://pfxzckysajoeuafisfym.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmeHpja3lzYWpvZXVhZmlzZnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NjUzODgsImV4cCI6MjA3NTE0MTM4OH0.VK-G25BzsA72qaDm-wQtEHbnwgrShmRZzDYHaZPTmOo';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Не заданы переменные окружения NEXT_PUBLIC_SUPABASE_URL и/или NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+  console.error('   Установите их в .env.local или экспортируйте перед запуском скрипта.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -37,7 +43,7 @@ COMMENT ON TABLE public.tenders IS 'Таблица тендеров для CRM �
     if (error) {
       console.error('❌ Ошибка создания таблицы:', error.message);
       console.log('\n📝 Создайте таблицу вручную:');
-      console.log('1. Откройте https://supabase.com/dashboard/project/pfxzckysajoeuafisfym/sql');
+      console.log('1. Откройте ваш Supabase Dashboard → SQL Editor');
       console.log('2. Скопируйте содержимое файла supabase/create_tenders_table.sql');
       console.log('3. Выполните SQL скрипт');
     } else {
@@ -46,7 +52,7 @@ COMMENT ON TABLE public.tenders IS 'Таблица тендеров для CRM �
   } catch (err) {
     console.error('❌ Ошибка:', err.message);
     console.log('\n📝 Создайте таблицу вручную:');
-    console.log('1. Откройте https://supabase.com/dashboard/project/pfxzckysajoeuafisfym/sql');
+    console.log('1. Откройте ваш Supabase Dashboard → SQL Editor');
     console.log('2. Скопируйте содержимое файла supabase/create_tenders_table.sql');
     console.log('3. Выполните SQL скрипт');
   }
