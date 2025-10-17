@@ -73,6 +73,8 @@ export default function DashboardPage() {
     underReview: 0,
     reminders: 0,
   });
+  
+  const [reminderTenders, setReminderTenders] = useState<Array<{name: string, deadline: string}>>([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -101,18 +103,23 @@ export default function DashboardPage() {
         // Напоминания: тендеры с дедлайном в ближайшие 3 дня
         const threeDaysFromNow = new Date();
         threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-        const remindersCount = data.filter(t => {
+        const reminders = data.filter(t => {
           if (!t.submission_deadline) return false;
           const deadline = new Date(t.submission_deadline);
           const now = new Date();
-          return deadline > now && deadline <= threeDaysFromNow;
-        }).length;
+          return deadline >= now && deadline <= threeDaysFromNow;
+        }).map(t => ({
+          name: t.name,
+          deadline: t.submission_deadline!
+        }));
 
         setStats({
           inWork: inWorkCount,
           underReview: underReviewCount,
-          reminders: remindersCount,
+          reminders: reminders.length,
         });
+        
+        setReminderTenders(reminders);
       }
     };
 
@@ -212,7 +219,13 @@ export default function DashboardPage() {
     {
       title: 'Напоминания',
       value: stats.reminders.toString(),
-      description: 'Требуют внимания',
+      description: reminderTenders.length > 0 
+        ? reminderTenders.map(t => {
+            const deadline = new Date(t.deadline);
+            const daysLeft = Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            return `${t.name} (${daysLeft}д)`;
+          }).join(', ')
+        : 'Нет срочных дедлайнов',
       icon: Bell,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
