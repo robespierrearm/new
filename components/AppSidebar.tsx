@@ -50,8 +50,8 @@ const menuItems = [
     icon: FolderOpen,
   },
   {
-    title: 'Настройки',
-    href: '/settings',
+    title: 'Админка',
+    href: '/admin',
     icon: Settings,
   },
 ];

@@ -113,6 +113,45 @@ export interface TenderLinkInsert {
   description?: string | null;
 }
 
+// Users (пользователи)
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  password: string;
+  is_online: boolean;
+  last_activity: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserInsert {
+  username: string;
+  email: string;
+  password: string;
+  is_online?: boolean;
+  last_activity?: string;
+}
+
+// Activity Logs (логи действий)
+export interface ActivityLog {
+  id: number;
+  user_id: number | null;
+  username: string;
+  action: string;
+  action_type: string;
+  details: any;
+  created_at: string;
+}
+
+export interface ActivityLogInsert {
+  user_id?: number | null;
+  username: string;
+  action: string;
+  action_type: string;
+  details?: any;
+}
+
 export interface FileUpdate {
   name?: string;
   category?: string;
