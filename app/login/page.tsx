@@ -37,11 +37,12 @@ export default function LoginPage() {
       }
 
       // Проверяем, активен ли пользователь
-      if (!user.is_active) {
-        setError('Ваш аккаунт деактивирован. Обратитесь к администратору.');
-        setIsLoading(false);
-        return;
-      }
+      // Временно отключено для отладки
+      // if (!user.is_active) {
+      //   setError('Ваш аккаунт деактивирован. Обратитесь к администратору.');
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       // Обновляем статус онлайн
       await supabase
