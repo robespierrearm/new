@@ -120,7 +120,7 @@ export function AppSidebar() {
       {/* Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={closeMobileMenu}
         />
       )}
@@ -128,10 +128,10 @@ export function AppSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed md:static inset-y-0 left-0 z-40 flex h-screen flex-col border-r bg-white shadow-lg transition-all duration-300 md:translate-x-0",
+          "fixed md:static inset-0 md:inset-y-0 z-40 flex h-screen flex-col border-r bg-white shadow-lg transition-all duration-300 md:translate-x-0",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
           isCollapsed ? "md:w-20" : "md:w-64",
-          "w-64"
+          "md:w-64"
         )}
       >
       {/* Logo */}
