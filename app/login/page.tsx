@@ -36,6 +36,13 @@ export default function LoginPage() {
         return;
       }
 
+      // Проверяем, активен ли пользователь
+      if (!user.is_active) {
+        setError('Ваш аккаунт деактивирован. Обратитесь к администратору.');
+        setIsLoading(false);
+        return;
+      }
+
       // Обновляем статус онлайн
       await supabase
         .from('users')

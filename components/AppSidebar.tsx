@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Logo } from '@/components/Logo';
+import { supabase } from '@/lib/supabase';
+import { logActivity, ACTION_TYPES } from '@/lib/activityLogger';
 import {
   Home,
   FileText,
@@ -59,11 +61,37 @@ const menuItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTendersOpen, setIsTendersOpen] = useState(true); // Выпадающее меню тендеров
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Функция выхода
+  const handleLogout = async () => {
+    try {
+      // Логируем выход
+      await logActivity('Выход из системы', ACTION_TYPES.LOGOUT);
+
+      // Обновляем статус пользователя
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (currentUser.id) {
+        await supabase
+          .from('users')
+          .update({ is_online: false })
+          .eq('id', currentUser.id);
+      }
+
+      // Очищаем localStorage
+      localStorage.removeItem('currentUser');
+
+      // Перенаправляем на страницу входа
+      router.push('/login');
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+    }
+  };
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleTenders = () => setIsTendersOpen(!isTendersOpen);
 
@@ -266,6 +294,7 @@ export function AppSidebar() {
       <div className="border-t p-4 bg-gray-50">
         <Button
           variant="ghost"
+          onClick={handleLogout}
           className={cn(
             'w-full gap-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all',
             isCollapsed ? 'justify-center px-2' : 'justify-start px-4'

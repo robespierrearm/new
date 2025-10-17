@@ -15,7 +15,9 @@ import {
   Search, 
   FileText,
   Clock,
-  Filter
+  Filter,
+  Ban,
+  CheckCircle
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -161,6 +163,40 @@ export default function AdminPage() {
     loadLogs();
   };
 
+  // Деактивация/активация пользователя
+  const handleToggleUserActive = async (user: User) => {
+    const newStatus = !user.is_active;
+    const action = newStatus ? 'активирован' : 'деактивирован';
+
+    if (!confirm(`${newStatus ? 'Активировать' : 'Деактивировать'} пользователя ${user.username}?`)) return;
+
+    const { error } = await supabase
+      .from('users')
+      .update({ is_active: newStatus })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Ошибка изменения статуса пользователя:', error);
+      alert('Ошибка изменения статуса пользователя');
+      return;
+    }
+
+    // Добавляем лог
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    await supabase
+      .from('activity_logs')
+      .insert({
+        user_id: currentUser.id,
+        username: currentUser.username || 'Система',
+        action: `Пользователь ${user.username} ${action}`,
+        action_type: newStatus ? 'user_activate' : 'user_deactivate',
+        details: { email: user.email, is_active: newStatus }
+      });
+
+    loadUsers();
+    loadLogs();
+  };
+
   // Удаление пользователя
   const handleDeleteUser = async (user: User) => {
     if (!confirm(`Удалить пользователя ${user.username}?`)) return;
@@ -258,21 +294,34 @@ export default function AdminPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Статус</th>
+                  <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Онлайн</th>
+                  <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Активен</th>
                   <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Имя</th>
                   <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Email</th>
-                  <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Активность</th>
+                  <th className="text-left py-2 px-2 text-sm font-medium text-gray-700">Последняя активность</th>
                   <th className="text-right py-2 px-2 text-sm font-medium text-gray-700">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b hover:bg-gray-50">
+                  <tr key={user.id} className={`border-b hover:bg-gray-50 ${!user.is_active ? 'opacity-50' : ''}`}>
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-1">
                         <div className={`w-2 h-2 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                         <span className="text-xs text-gray-600">
                           {user.is_online ? 'Онлайн' : 'Оффлайн'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-2">
+                      <div className="flex items-center gap-1">
+                        {user.is_active ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Ban className="h-4 w-4 text-red-600" />
+                        )}
+                        <span className={`text-xs ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                          {user.is_active ? 'Активен' : 'Деактивирован'}
                         </span>
                       </div>
                     </td>
@@ -283,6 +332,15 @@ export default function AdminPage() {
                     </td>
                     <td className="py-3 px-2">
                       <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleUserActive(user)}
+                          className={`h-8 w-8 p-0 ${user.is_active ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
+                          title={user.is_active ? 'Деактивировать' : 'Активировать'}
+                        >
+                          {user.is_active ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

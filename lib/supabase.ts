@@ -120,6 +120,7 @@ export interface User {
   email: string;
   password: string;
   is_online: boolean;
+  is_active: boolean;
   last_activity: string;
   created_at: string;
   updated_at: string;
