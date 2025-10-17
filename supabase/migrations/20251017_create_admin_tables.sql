@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
   is_online BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
   last_activity TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -16,11 +17,13 @@ COMMENT ON COLUMN public.users.username IS 'Имя пользователя';
 COMMENT ON COLUMN public.users.email IS 'Email пользователя';
 COMMENT ON COLUMN public.users.password IS 'Пароль (хешированный)';
 COMMENT ON COLUMN public.users.is_online IS 'Статус онлайн';
+COMMENT ON COLUMN public.users.is_active IS 'Активен ли пользователь (деактивированные не могут войти)';
 COMMENT ON COLUMN public.users.last_activity IS 'Время последней активности';
 
 -- Индексы для users
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_is_online ON public.users(is_online);
+CREATE INDEX IF NOT EXISTS idx_users_is_active ON public.users(is_active);
 
 -- Создание таблицы логов действий
 CREATE TABLE IF NOT EXISTS public.activity_logs (
@@ -85,8 +88,8 @@ CREATE TRIGGER trigger_update_users_updated_at
   EXECUTE FUNCTION update_users_updated_at();
 
 -- Вставка главного администратора
-INSERT INTO public.users (username, email, password, is_online, last_activity)
-VALUES ('Armen', 'Armen@gmail.com', 'Armen@gmail.com', false, NOW())
+INSERT INTO public.users (username, email, password, is_online, is_active, last_activity)
+VALUES ('Armen', 'Armen@gmail.com', 'Armen@gmail.com', false, true, NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Лог создания администратора

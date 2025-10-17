@@ -66,6 +66,9 @@ export default function LoginPage() {
       // Сохраняем пользователя в localStorage
       localStorage.setItem('currentUser', JSON.stringify(user));
 
+      // Устанавливаем cookie для middleware
+      document.cookie = `auth-token=${user.id}; path=/; max-age=86400`; // 24 часа
+
       // Перенаправляем на дашборд
       router.push('/dashboard');
     } catch (err) {
@@ -117,7 +120,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Armen@gmail.com"
+                  placeholder="Введите email"
                   className="pl-10 h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                   required
                 />
@@ -135,7 +138,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Введите пароль"
                   className="pl-10 h-12 border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                   required
                 />

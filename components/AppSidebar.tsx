@@ -86,6 +86,9 @@ export function AppSidebar() {
       // Очищаем localStorage
       localStorage.removeItem('currentUser');
 
+      // Удаляем cookie
+      document.cookie = 'auth-token=; path=/; max-age=0';
+
       // Перенаправляем на страницу входа
       router.push('/login');
     } catch (error) {

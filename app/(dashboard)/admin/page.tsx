@@ -332,15 +332,18 @@ export default function AdminPage() {
                     </td>
                     <td className="py-3 px-2">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleUserActive(user)}
-                          className={`h-8 w-8 p-0 ${user.is_active ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
-                          title={user.is_active ? 'Деактивировать' : 'Активировать'}
-                        >
-                          {user.is_active ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                        </Button>
+                        {/* Скрываем кнопку деактивации для главного администратора */}
+                        {user.email.toLowerCase() !== 'armen@gmail.com' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleUserActive(user)}
+                            className={`h-8 w-8 p-0 ${user.is_active ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' : 'text-green-600 hover:text-green-700 hover:bg-green-50'}`}
+                            title={user.is_active ? 'Деактивировать' : 'Активировать'}
+                          >
+                            {user.is_active ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -352,14 +355,17 @@ export default function AdminPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Скрываем кнопку удаления для главного администратора */}
+                        {user.email.toLowerCase() !== 'armen@gmail.com' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
