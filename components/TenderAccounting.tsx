@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { ChevronDown, ChevronUp, Plus, Trash2, TrendingUp, TrendingDown, BarChart3, FileText, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TenderDocumentsModal } from '@/components/TenderDocumentsModal';
+import { PlatformButton } from '@/components/PlatformButton';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -259,7 +260,10 @@ export function TenderAccounting({ tender, expenses, onExpenseAdded, onExpenseDe
         className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
         <div className="flex-1 text-left">
-          <h3 className="font-semibold text-lg text-gray-900">{tender.name}</h3>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h3 className="font-semibold text-lg text-gray-900">{tender.name}</h3>
+            <PlatformButton link={tender.link} />
+          </div>
           <div className="flex items-center gap-4 mt-2 text-sm">
             <span className="text-gray-600">
               Доход: <span className="font-medium text-green-600">{formatAmount(income)}</span>

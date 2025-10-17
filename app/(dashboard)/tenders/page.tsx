@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { AddTenderDialog } from '@/components/AddTenderDialog';
 import { EditTenderDialog } from '@/components/EditTenderDialog';
 import { TenderStatusChanger } from '@/components/TenderStatusChanger';
-import { Pencil, Trash2, Calendar, DollarSign, Link as LinkIcon, FileText } from 'lucide-react';
+import { PlatformButton } from '@/components/PlatformButton';
+import { Pencil, Trash2, Calendar, DollarSign, FileText } from 'lucide-react';
 
 type TabType = 'all' | 'new' | 'review' | 'inwork' | 'archive';
 type ArchiveFilter = 'all' | 'completed' | 'lost';
@@ -329,20 +330,10 @@ function TendersContent() {
                 {/* Заголовок и действия */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       <h3 className="font-semibold text-base text-gray-900 truncate">{tender.name}</h3>
-                      {tender.link && (
-                        <a
-                          href={tender.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex-shrink-0"
-                          title="Открыть ссылку"
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                        </a>
-                      )}
+                      <PlatformButton link={tender.link} />
                     </div>
                     <span
                       className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
