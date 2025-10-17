@@ -74,7 +74,7 @@ export default function DashboardPage() {
     reminders: 0,
   });
   
-  const [reminderTenders, setReminderTenders] = useState<Array<{name: string, deadline: string}>>([]);
+  const [reminderTenders, setReminderTenders] = useState<Array<{id: number, name: string, deadline: string}>>([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -109,6 +109,7 @@ export default function DashboardPage() {
           const now = new Date();
           return deadline >= now && deadline <= threeDaysFromNow;
         }).map(t => ({
+          id: t.id,
           name: t.name,
           deadline: t.submission_deadline!
         }));
@@ -258,7 +259,7 @@ export default function DashboardPage() {
 
         {/* Три основных блока */}
         <div className="grid gap-3 md:grid-cols-3 mb-5 max-w-4xl">
-          {mainCards.map((card) => {
+          {mainCards.slice(0, 2).map((card) => {
             const Icon = card.icon;
             return (
               <Card
@@ -281,6 +282,52 @@ export default function DashboardPage() {
               </Card>
             );
           })}
+          
+          {/* Карточка напоминаний с вертикальным списком */}
+          <Card className="transition-all hover:shadow-lg border border-orange-200 bg-white">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded-lg bg-orange-50">
+                  <Bell className="h-4 w-4 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-medium text-gray-600">Напоминания</h3>
+                  <p className="text-xl font-bold text-gray-900">{stats.reminders}</p>
+                </div>
+              </div>
+              
+              {reminderTenders.length > 0 ? (
+                <div className="space-y-2">
+                  {reminderTenders.map((tender) => {
+                    const deadline = new Date(tender.deadline);
+                    const daysLeft = Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    return (
+                      <div
+                        key={tender.id}
+                        onClick={() => navigateToTender(tender.id)}
+                        className="p-2 rounded-lg bg-orange-50/50 hover:bg-orange-100 transition-colors cursor-pointer border border-orange-100"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-medium text-gray-900 flex-1 line-clamp-2">
+                            {tender.name}
+                          </p>
+                          <span className="text-xs font-bold text-orange-600 whitespace-nowrap">
+                            {daysLeft}д
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          До: {new Date(tender.deadline).toLocaleDateString('ru-RU')}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 text-center py-2">Нет срочных дедлайнов</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Нижние два блока: Последние тендеры (70%) + Файлы (30%) */}
