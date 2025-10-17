@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Logo } from '@/components/Logo';
@@ -65,8 +65,17 @@ export function AppSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isTendersOpen, setIsTendersOpen] = useState(true); // Выпадающее меню тендеров
+  const [currentUser, setCurrentUser] = useState<{ username?: string; email?: string }>({});
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Загружаем данные пользователя только на клиенте
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      setCurrentUser(user);
+    }
+  }, []);
 
   // Функция выхода
   const handleLogout = async () => {
@@ -293,20 +302,52 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="border-t p-4 bg-gray-50">
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          className={cn(
-            'w-full gap-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all',
-            isCollapsed ? 'justify-center px-2' : 'justify-start px-4'
-          )}
-          title={isCollapsed ? 'Выход' : undefined}
-        >
-          <LogOut className="h-5 w-5 shrink-0" />
-          {!isCollapsed && <span>Выход</span>}
-        </Button>
+      {/* User info and Logout */}
+      <div className="border-t p-4 bg-gradient-to-r from-gray-50 to-gray-100">
+        {!isCollapsed ? (
+          <div className="space-y-3">
+            {/* Имя пользователя */}
+            <div className="flex items-center gap-3 px-3 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+                {currentUser.username?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {currentUser.username || 'Пользователь'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {currentUser.email || ''}
+                </p>
+              </div>
+            </div>
+            
+            {/* Кнопка выхода */}
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all justify-start px-4 border border-red-200 hover:border-red-300"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="font-medium">Выход</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* Аватар в свернутом виде */}
+            <div className="w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+              {currentUser.username?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            {/* Кнопка выхода в свернутом виде */}
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className="w-full justify-center px-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all"
+              title="Выход"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
     </>
