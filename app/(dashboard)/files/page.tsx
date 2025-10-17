@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/table';
 import { Upload, Download, Trash2, FileText, Filter, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FilePreviewModal } from '@/components/FilePreviewModal';
+import { FileIconComponent } from '@/lib/fileIcons';
 
 const STORAGE_BUCKET = 'files';
 
@@ -52,6 +54,10 @@ export default function FilesPage() {
   const [selectedDocType, setSelectedDocType] = useState<DocumentType>('прочее');
   const [showOnDashboard, setShowOnDashboard] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Предпросмотр файлов
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   // Загрузка файлов и тендеров
   const loadFiles = async () => {
@@ -157,6 +163,18 @@ export default function FilesPage() {
     }
 
     setIsUploading(false);
+  };
+
+  // Предпросмотр файла
+  const handlePreview = async (file: File) => {
+    const { data } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrl(file.file_path, 3600); // URL действителен 1 час
+
+    if (data?.signedUrl) {
+      setPreviewFile(file);
+      setPreviewUrl(data.signedUrl);
+    }
   };
 
   // Скачивание файла
@@ -352,8 +370,12 @@ export default function FilesPage() {
               {filteredFiles.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <div className="text-2xl">{DOCUMENT_TYPE_ICONS[file.document_type]}</div>
+                    <div className="flex items-center gap-3">
+                      <FileIconComponent 
+                        fileName={file.original_name} 
+                        mimeType={file.mime_type || undefined}
+                        size="lg"
+                      />
                       <div>
                         <div>{file.name}</div>
                         <div className="text-xs text-gray-500">{file.original_name}</div>
@@ -379,6 +401,14 @@ export default function FilesPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePreview(file)}
+                        title="Предпросмотр"
+                      >
+                        <Eye className="h-4 w-4 text-purple-600" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -496,6 +526,21 @@ export default function FilesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Модальное окно предпросмотра */}
+      {previewFile && (
+        <FilePreviewModal
+          isOpen={!!previewFile}
+          onClose={() => {
+            setPreviewFile(null);
+            setPreviewUrl('');
+          }}
+          fileUrl={previewUrl}
+          fileName={previewFile.original_name}
+          fileSize={previewFile.file_size || 0}
+          mimeType={previewFile.mime_type || ''}
+        />
+      )}
     </div>
   );
 }

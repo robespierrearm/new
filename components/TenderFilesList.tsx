@@ -186,12 +186,10 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
   // Фильтрация файлов по типу
   const tenderDocs = files.filter(f => f.document_type === 'тендерная документация');
   const closingDocs = files.filter(f => f.document_type === 'закрывающие документы');
-  const otherDocs = files.filter(f => f.document_type === 'прочее');
 
   // Фильтрация ссылок по типу
   const tenderLinks = links.filter(l => l.document_type === 'тендерная документация');
   const closingLinks = links.filter(l => l.document_type === 'закрывающие документы');
-  const otherLinks = links.filter(l => l.document_type === 'прочее');
 
   // Проверка, можно ли загружать закрывающие документы
   const canUploadClosingDocs = tenderStatus === 'победа' || tenderStatus === 'в работе' || tenderStatus === 'завершён';
@@ -259,15 +257,12 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
   return (
     <div className="space-y-4">
       <Tabs defaultValue="tender" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="tender">
             Документы ({tenderDocs.length})
           </TabsTrigger>
           <TabsTrigger value="closing" disabled={!canUploadClosingDocs}>
             Закрывающие ({closingDocs.length})
-          </TabsTrigger>
-          <TabsTrigger value="other">
-            Прочее ({otherDocs.length})
           </TabsTrigger>
         </TabsList>
 
@@ -398,31 +393,6 @@ export function TenderFilesList({ tenderId, tenderStatus }: TenderFilesListProps
                   : "Закрывающие документы доступны после победы в тендере"
               } 
             />
-          )}
-        </TabsContent>
-
-        <TabsContent value="other" className="space-y-3 mt-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold text-gray-700">Прочие файлы</h3>
-            <Button
-              size="sm"
-              onClick={() => {
-                setUploadDocType('прочее');
-                setIsUploadDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Добавить
-            </Button>
-          </div>
-          {otherDocs.length > 0 ? (
-            <div className="space-y-2">
-              {otherDocs.map((file) => (
-                <FileCard key={file.id} file={file} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState message="Нет прочих файлов" />
           )}
         </TabsContent>
       </Tabs>

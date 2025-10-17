@@ -21,7 +21,7 @@ export function FileUploadDialog({
   open,
   onOpenChange,
   tenderId,
-  documentType = 'прочее',
+  documentType = 'тендерная документация',
   onUploadComplete,
 }: FileUploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -193,7 +193,7 @@ export function FileUploadDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DOCUMENT_TYPES.map((type) => (
+                {DOCUMENT_TYPES.filter(type => type !== 'прочее').map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
                   </SelectItem>

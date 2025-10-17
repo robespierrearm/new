@@ -14,6 +14,8 @@ import {
 import { FileText, Clock, Download, FolderOpen, Briefcase, Eye, Bell, ChevronRight } from 'lucide-react';
 import { supabase, File, Tender } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { FilePreviewModal } from '@/components/FilePreviewModal';
+import { FileIconComponent } from '@/lib/fileIcons';
 
 const getStatusColor = (status: Tender['status']) => {
   switch (status) {
@@ -75,6 +77,10 @@ export default function DashboardPage() {
   });
   
   const [reminderTenders, setReminderTenders] = useState<Array<{id: number, name: string, deadline: string}>>([]);
+
+  // Предпросмотр файлов
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -144,6 +150,18 @@ export default function DashboardPage() {
 
     loadDashboardFiles();
   }, []);
+
+  // Предпросмотр файла
+  const handlePreview = async (file: File) => {
+    const { data } = await supabase.storage
+      .from('files')
+      .createSignedUrl(file.file_path, 3600);
+
+    if (data?.signedUrl) {
+      setPreviewFile(file);
+      setPreviewUrl(data.signedUrl);
+    }
+  };
 
   // Скачивание файла
   const handleDownload = async (file: File) => {
@@ -403,25 +421,39 @@ export default function DashboardPage() {
                       key={file.id}
                       className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
                     >
-                      <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-                        <FileText className="h-3.5 w-3.5 text-blue-600" />
-                      </div>
+                      <FileIconComponent 
+                        fileName={file.original_name} 
+                        mimeType={file.mime_type || undefined}
+                        size="sm"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-xs text-gray-900 truncate">{file.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                            {file.category}
+                            {file.document_type}
                           </span>
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(file)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePreview(file)}
+                          className="p-1 h-auto"
+                          title="Предпросмотр"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-purple-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownload(file)}
+                          className="p-1 h-auto"
+                          title="Скачать"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -435,6 +467,21 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Модальное окно предпросмотра */}
+      {previewFile && (
+        <FilePreviewModal
+          isOpen={!!previewFile}
+          onClose={() => {
+            setPreviewFile(null);
+            setPreviewUrl('');
+          }}
+          fileUrl={previewUrl}
+          fileName={previewFile.original_name}
+          fileSize={previewFile.file_size || 0}
+          mimeType={previewFile.mime_type || ''}
+        />
+      )}
     </div>
   );
 }

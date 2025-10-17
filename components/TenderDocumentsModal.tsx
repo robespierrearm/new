@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { supabase, File, DocumentType, DOCUMENT_TYPE_ICONS, DOCUMENT_TYPE_COLORS, TenderLink, TenderLinkInsert } from '@/lib/supabase';
 import { FileUploadDialog } from '@/components/FileUploadDialog';
-import { Download, Trash2, Plus, Search, FileText, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { Download, Trash2, Plus, Search, FileText, Link as LinkIcon, ExternalLink, Eye } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FilePreviewModal } from '@/components/FilePreviewModal';
+import { FileIconComponent } from '@/lib/fileIcons';
 
 interface TenderDocumentsModalProps {
   open: boolean;
@@ -41,6 +43,10 @@ export function TenderDocumentsModal({
     url: '',
     description: '',
   });
+
+  // Предпросмотр файлов
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   // Загрузка файлов
   const loadFiles = async () => {
@@ -102,6 +108,18 @@ export function TenderDocumentsModal({
       setFilteredLinks(links);
     }
   }, [searchQuery, files, links]);
+
+  // Предпросмотр файла
+  const handlePreview = async (file: File) => {
+    const { data } = await supabase.storage
+      .from('files')
+      .createSignedUrl(file.file_path, 3600);
+
+    if (data?.signedUrl) {
+      setPreviewFile(file);
+      setPreviewUrl(data.signedUrl);
+    }
+  };
 
   // Скачивание файла
   const handleDownload = async (file: File) => {
@@ -359,9 +377,11 @@ export function TenderDocumentsModal({
                 {filteredFiles.map((file) => (
                   <Card key={file.id} className="p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${DOCUMENT_TYPE_COLORS[file.document_type]} flex-shrink-0`}>
-                        <span className="text-2xl">{DOCUMENT_TYPE_ICONS[file.document_type]}</span>
-                      </div>
+                      <FileIconComponent 
+                        fileName={file.original_name} 
+                        mimeType={file.mime_type || undefined}
+                        size="lg"
+                      />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm text-gray-900 truncate">{file.name}</h4>
                         <p className="text-xs text-gray-500 mt-1 truncate">{file.original_name}</p>
@@ -378,6 +398,15 @@ export function TenderDocumentsModal({
                         </div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePreview(file)}
+                          className="h-9 w-9 p-0"
+                          title="Предпросмотр"
+                        >
+                          <Eye className="h-4 w-4 text-purple-600" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -488,6 +517,21 @@ export function TenderDocumentsModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Модальное окно предпросмотра */}
+      {previewFile && (
+        <FilePreviewModal
+          isOpen={!!previewFile}
+          onClose={() => {
+            setPreviewFile(null);
+            setPreviewUrl('');
+          }}
+          fileUrl={previewUrl}
+          fileName={previewFile.original_name}
+          fileSize={previewFile.file_size || 0}
+          mimeType={previewFile.mime_type || ''}
+        />
+      )}
     </>
   );
 }
