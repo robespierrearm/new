@@ -4,46 +4,57 @@ export async function POST(request: NextRequest) {
   try {
     const { messages } = await request.json();
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GOOGLE_AI_KEY;
     
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Groq API key не настроен' },
+        { error: 'Google AI API key не настроен' },
         { status: 500 }
       );
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты полезный ИИ-помощник в CRM-системе для управления тендерами. Отвечай кратко, по делу и на русском языке. Помогай с вопросами о работе, тендерах, документах и организации процессов.'
+    // Преобразуем сообщения в формат Gemini
+    const systemPrompt = 'Ты полезный ИИ-помощник в CRM-системе для управления тендерами. Отвечай кратко, по делу и на русском языке. Помогай с вопросами о работе, тендерах, документах и организации процессов.';
+    
+    // Gemini использует формат contents с parts
+    const contents = messages.map((msg: any) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.role === 'user' ? msg.content : msg.content }]
+    }));
+
+    // Добавляем системный промпт в первое сообщение
+    if (contents.length > 0 && contents[0].role === 'user') {
+      contents[0].parts[0].text = `${systemPrompt}\n\n${contents[0].parts[0].text}`;
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
           },
-          ...messages
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Groq API error:', error);
+      console.error('Google AI error:', error);
       return NextResponse.json(
-        { error: `Ошибка Groq API: ${error.error?.message || 'Неизвестная ошибка'}` },
+        { error: `Ошибка Google AI: ${error.error?.message || 'Неизвестная ошибка'}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    const aiMessage = data.choices[0]?.message?.content || 'Извините, не удалось получить ответ.';
+    const aiMessage = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Извините, не удалось получить ответ.';
 
     return NextResponse.json({ message: aiMessage });
   } catch (error) {

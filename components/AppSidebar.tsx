@@ -206,8 +206,7 @@ export function AppSidebar() {
                 {/* Основная кнопка Тендеры - кликабельна и открывает все тендеры */}
                 <div className="relative">
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       closeMobileMenu();
                       router.push('/tenders');
                     }}
@@ -244,8 +243,7 @@ export function AppSidebar() {
                 {isTendersOpen && !isCollapsed && (
                   <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-3">
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         closeMobileMenu();
                         router.push('/tenders?tab=new');
                       }}
@@ -259,8 +257,7 @@ export function AppSidebar() {
                         Новые
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         closeMobileMenu();
                         router.push('/tenders?tab=review');
                       }}
@@ -274,8 +271,7 @@ export function AppSidebar() {
                         На рассмотрении
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         closeMobileMenu();
                         router.push('/tenders?tab=inwork');
                       }}
@@ -289,8 +285,7 @@ export function AppSidebar() {
                         В работе
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         closeMobileMenu();
                         router.push('/tenders?tab=archive');
                       }}
@@ -313,8 +308,7 @@ export function AppSidebar() {
           return (
             <button
               key={item.href}
-              onClick={(e) => {
-                e.preventDefault();
+              onClick={() => {
                 closeMobileMenu();
                 router.push(item.href);
               }}
