@@ -49,11 +49,6 @@ const menuItems = [
     icon: DollarSign,
   },
   {
-    title: 'Файлы',
-    href: '/files',
-    icon: FolderOpen,
-  },
-  {
     title: 'Чат',
     href: '/chat',
     icon: MessageSquare,

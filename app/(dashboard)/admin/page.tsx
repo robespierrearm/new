@@ -19,8 +19,10 @@ import {
   Filter,
   Ban,
   CheckCircle,
-  X
+  X,
+  FolderOpen
 } from 'lucide-react';
+import { FilesPanel } from '@/components/FilesPanel';
 
 export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -32,6 +34,7 @@ export default function AdminPage() {
   const [filterActionType, setFilterActionType] = useState('all');
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [activePanel, setActivePanel] = useState<'users' | 'files'>('users');
   
   const [newUser, setNewUser] = useState<UserInsert>({
     username: '',
@@ -288,21 +291,46 @@ export default function AdminPage() {
           <p className="text-sm text-gray-600 mt-1">Управление пользователями и журнал действий</p>
         </div>
 
-        {/* Карточка Пользователи */}
-        <Card 
-          className="p-6 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 border-2 border-blue-200 bg-white max-w-md"
-          onClick={() => setIsPanelOpen(true)}
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-blue-50">
-              <Users className="h-8 w-8 text-blue-600" />
+        {/* Карточки */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Карточка Пользователи */}
+          <Card 
+            className="p-6 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 border-2 border-blue-200 bg-white"
+            onClick={() => {
+              setActivePanel('users');
+              setIsPanelOpen(true);
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-blue-50">
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Пользователи</h3>
+                <p className="text-sm text-gray-600 mt-0.5">{users.length} пользователей • {logs.length} записей</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Пользователи и журнал</h3>
-              <p className="text-sm text-gray-600 mt-0.5">{users.length} пользователей • {logs.length} записей</p>
+          </Card>
+
+          {/* Карточка Файлы */}
+          <Card 
+            className="p-6 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 border-2 border-purple-200 bg-white"
+            onClick={() => {
+              setActivePanel('files');
+              setIsPanelOpen(true);
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-purple-50">
+                <FolderOpen className="h-8 w-8 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Файлы</h3>
+                <p className="text-sm text-gray-600 mt-0.5">Управление документами</p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Адаптивное рабочее окно */}
@@ -330,14 +358,26 @@ export default function AdminPage() {
               className="fixed top-0 right-0 bottom-0 w-full md:w-[calc(100%-16rem)] lg:w-[calc(100%-16rem)] bg-white shadow-2xl z-50 overflow-hidden flex flex-col"
             >
               {/* Заголовок панели */}
-              <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-white">
+              <div className={`flex items-center justify-between px-6 py-4 border-b ${
+                activePanel === 'users' 
+                  ? 'bg-gradient-to-r from-blue-50 to-white' 
+                  : 'bg-gradient-to-r from-purple-50 to-white'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100">
-                    <Users className="h-5 w-5 text-blue-600" />
+                  <div className={`p-2 rounded-lg ${
+                    activePanel === 'users' ? 'bg-blue-100' : 'bg-purple-100'
+                  }`}>
+                    {activePanel === 'users' ? (
+                      <Users className="h-5 w-5 text-blue-600" />
+                    ) : (
+                      <FolderOpen className="h-5 w-5 text-purple-600" />
+                    )}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Пользователи и журнал</h2>
-                    {selectedUser && (
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {activePanel === 'users' ? 'Пользователи и журнал' : 'Файловая система'}
+                    </h2>
+                    {activePanel === 'users' && selectedUser && (
                       <p className="text-xs text-gray-600 mt-0.5">Журнал: {selectedUser.username}</p>
                     )}
                   </div>
@@ -357,6 +397,12 @@ export default function AdminPage() {
 
               {/* Содержимое панели */}
               <div className="flex-1 overflow-hidden flex">
+                {activePanel === 'files' ? (
+                  <div className="w-full p-6">
+                    <FilesPanel isActive={activePanel === 'files'} />
+                  </div>
+                ) : (
+                  <>
                 {/* Левая часть - Пользователи */}
                 <div className="w-1/2 border-r overflow-y-auto p-6">
                     {/* Кнопка добавления и поиск */}
@@ -539,6 +585,8 @@ export default function AdminPage() {
             ))}
           </div>
                 </div>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
