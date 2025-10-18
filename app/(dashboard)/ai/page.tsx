@@ -55,35 +55,85 @@ export default function AIPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content }))
-        }),
-      });
+      // Проверяем, доступен ли API роут (работает только локально)
+      const isLocalhost = typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        throw new Error(errorData.error || 'Ошибка при получении ответа от ИИ');
+      let aiResponseText = '';
+
+      if (isLocalhost) {
+        // Локально - используем API роут
+        const response = await fetch('/api/ai-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content }))
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API Error:', errorData);
+          throw new Error(errorData.error || 'Ошибка при получении ответа от ИИ');
+        }
+
+        const data = await response.json();
+        aiResponseText = data.message;
+      } else {
+        // На GitHub Pages - вызываем Google Gemini напрямую
+        const apiKey = 'AIzaSyB4q--whZbW0GpezMXfJncEQibZayhRbaA';
+        const systemPrompt = 'Ты полезный ИИ-помощник в CRM-системе для управления тендерами. Отвечай кратко, по делу и на русском языке. Помогай с вопросами о работе, тендерах, документах и организации процессов.';
+        
+        // Преобразуем сообщения в формат Gemini
+        const contents = [...messages, userMessage].map((msg) => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        }));
+
+        // Добавляем системный промпт в первое сообщение
+        if (contents.length > 0 && contents[0].role === 'user') {
+          contents[0].parts[0].text = `${systemPrompt}\n\n${contents[0].parts[0].text}`;
+        }
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1000,
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Google AI error:', error);
+          throw new Error(`Ошибка Google AI: ${error.error?.message || 'Неизвестная ошибка'}`);
+        }
+
+        const data = await response.json();
+        aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Извините, не удалось получить ответ.';
       }
-
-      const data = await response.json();
       
       const aiMessage: AIMessage = {
         role: 'assistant',
-        content: data.message,
+        content: aiResponseText,
         timestamp: new Date().toISOString(),
       };
 
       setMessages(prev => [...prev, aiMessage]);
       await logActivity('Получен ответ от ИИ-помощника', ACTION_TYPES.LOGIN);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка:', error);
+      
       const errorMessage: AIMessage = {
         role: 'assistant',
-        content: 'Извините, произошла ошибка. Пожалуйста, попробуйте позже.',
+        content: 'Извините, произошла ошибка при получении ответа. Пожалуйста, попробуйте позже.',
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMessage]);
