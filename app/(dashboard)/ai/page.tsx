@@ -95,20 +95,21 @@ export default function AIPage() {
           contents[0].parts[0].text = `${systemPrompt}\n\n${contents[0].parts[0].text}`;
         }
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents,
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1000,
-              },
-            }),
-          }
-        );
+        // Используем CORS прокси для обхода региональных ограничений
+        const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+        
+        const response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1000,
+            },
+          }),
+        });
 
         if (!response.ok) {
           const error = await response.json();
