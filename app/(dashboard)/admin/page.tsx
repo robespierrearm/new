@@ -73,6 +73,45 @@ export default function AdminPage() {
     setLogs(data || []);
   };
 
+  // Очистка логов
+  const handleClearLogs = async () => {
+    if (!confirm('Вы уверены, что хотите очистить все логи? Это действие нельзя отменить.')) {
+      return;
+    }
+
+    try {
+      // Получаем все ID логов
+      const { data: allLogs } = await supabase
+        .from('activity_logs')
+        .select('id');
+
+      if (!allLogs || allLogs.length === 0) {
+        alert('Логи уже пусты');
+        return;
+      }
+
+      // Удаляем по ID
+      const ids = allLogs.map(log => log.id);
+      const { error } = await supabase
+        .from('activity_logs')
+        .delete()
+        .in('id', ids);
+
+      if (error) {
+        console.error('Ошибка очистки логов:', error);
+        alert(`Ошибка при очистке логов: ${error.message}`);
+        return;
+      }
+
+      setLogs([]); // Сразу очищаем локальное состояние
+      await loadLogs(); // Перезагружаем логи
+      alert('✅ Логи успешно очищены');
+    } catch (error: any) {
+      console.error('Ошибка:', error);
+      alert(`Ошибка: ${error.message}`);
+    }
+  };
+
   // Обновление статуса онлайн
   const updateOnlineStatus = async () => {
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
@@ -531,16 +570,27 @@ export default function AdminPage() {
                         {selectedUser ? `Журнал: ${selectedUser.username}` : 'Все действия'}
                       </h2>
                     </div>
-                    {selectedUser && (
+                    <div className="flex items-center gap-2">
+                      {selectedUser && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedUserId(null)}
+                          className="text-xs"
+                        >
+                          Показать все
+                        </Button>
+                      )}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => setSelectedUserId(null)}
-                        className="text-xs"
+                        onClick={handleClearLogs}
+                        className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                       >
-                        Показать все
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Очистить логи
                       </Button>
-                    )}
+                    </div>
                   </div>
 
                   {/* Фильтр */}
