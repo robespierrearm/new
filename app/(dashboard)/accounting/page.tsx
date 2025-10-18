@@ -68,8 +68,14 @@ export default function AccountingPage() {
     loadData();
   }, []);
 
-  // Общая статистика
-  const totalIncome = tendersWithExpenses.reduce((sum, item) => sum + (item.tender.win_price || 0), 0);
+  // Общая статистика - доход считаем только по завершённым тендерам
+  const totalIncome = tendersWithExpenses.reduce((sum, item) => {
+    if (item.tender.status === 'завершён') {
+      return sum + (item.tender.win_price || 0);
+    }
+    return sum;
+  }, 0);
+  
   const totalExpenses = tendersWithExpenses.reduce((sum, item) => 
     sum + item.expenses.reduce((expSum, exp) => expSum + exp.amount, 0), 0
   );
@@ -92,7 +98,7 @@ export default function AccountingPage() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-0.5">Бухгалтерия</h1>
         <p className="text-xs text-gray-600">
-          Финансовый учёт по выигранным тендерам
+          Финансовый учёт по выигранным тендерам (доход считается только по завершённым)
         </p>
       </div>
 
