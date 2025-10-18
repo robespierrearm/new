@@ -5,20 +5,38 @@ import { supabase, MessageInsert } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Send, Trash2, Share2, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Trash2, Share2, Sparkles, Loader2, Bot } from 'lucide-react';
 import { logActivity, ACTION_TYPES } from '@/lib/activityLogger';
+import { AIProvider } from '@/lib/ai-providers';
 
 interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  action?: {
+    type: 'ADD_TENDER' | 'ADD_EXPENSE' | 'ADD_SUPPLIER';
+    data: any;
+  };
 }
 
 export default function AIPage() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('intelligence');
+  const [selectedModel, setSelectedModel] = useState<string>('meta-llama/Llama-3.3-70B-Instruct');
+  const [availableProviders, setAvailableProviders] = useState<AIProvider[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Модели для Intelligence.io
+  const intelligenceModels = [
+    { id: 'meta-llama/Llama-3.3-70B-Instruct', name: 'Llama 3.3 70B (рекомендуется)' },
+    { id: 'mistralai/Mistral-Nemo-Instruct-2407', name: 'Mistral Nemo (быстрая)' },
+    { id: 'openai/gpt-oss-20b', name: 'GPT OSS 20B' },
+    { id: 'Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar', name: 'Qwen3 Coder (для кода)' },
+    { id: 'mistralai/Devstral-Small-2505', name: 'Devstral (для разработки)' },
+    { id: 'swiss-ai/Apertus-70B-Instruct-2509', name: 'Apertus 70B' },
+  ];
 
   // Загрузка истории из LocalStorage
   useEffect(() => {
@@ -26,6 +44,25 @@ export default function AIPage() {
     if (savedHistory) {
       setMessages(JSON.parse(savedHistory));
     }
+  }, []);
+
+  // Загрузка доступных провайдеров
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const response = await fetch('/api/ai-chat');
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableProviders(data.providers || []);
+          if (data.providers?.length > 0 && !data.providers.includes(selectedProvider)) {
+            setSelectedProvider(data.providers[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки провайдеров:', error);
+      }
+    };
+    loadProviders();
   }, []);
 
   // Сохранение истории в LocalStorage
@@ -62,12 +99,58 @@ export default function AIPage() {
       let aiResponseText = '';
 
       if (isLocalhost) {
-        // Локально - используем API роут
+        // Загружаем контекст из базы данных
+        let contextMessage = '';
+        try {
+          const contextResponse = await fetch('/api/ai-context');
+          if (contextResponse.ok) {
+            const { stats } = await contextResponse.json();
+            contextMessage = `\n\nКОНТЕКСТ ИЗ БАЗЫ ДАННЫХ (используй эти данные для ответа на вопросы пользователя):
+Тендеры:
+- Всего тендеров: ${stats.tenders.total}
+- По статусам: Новых - ${stats.tenders.byStatus['новый']}, Подано - ${stats.tenders.byStatus['подано']}, На рассмотрении - ${stats.tenders.byStatus['на рассмотрении']}, Победа - ${stats.tenders.byStatus['победа']}, В работе - ${stats.tenders.byStatus['в работе']}, Завершено - ${stats.tenders.byStatus['завершён']}, Проигрыш - ${stats.tenders.byStatus['проигрыш']}
+- Общая начальная цена всех тендеров: ${stats.tenders.totalStartPrice.toLocaleString('ru-RU')} ₽
+- Общая цена побед: ${stats.tenders.totalWinPrice.toLocaleString('ru-RU')} ₽
+
+Последние тендеры:
+${stats.tenders.recentTenders.map((t: any, i: number) => `${i + 1}. ${t.name} (${t.status}) - ${t.start_price?.toLocaleString('ru-RU') || 0} ₽`).join('\n')}
+
+Поставщики:
+- Всего поставщиков: ${stats.suppliers.total}
+- По категориям: ${Object.entries(stats.suppliers.byCategory).map(([cat, count]) => `${cat}: ${count}`).join(', ')}
+
+Расходы:
+- Всего записей расходов: ${stats.expenses.total}
+- Общая сумма расходов: ${stats.expenses.totalAmount.toLocaleString('ru-RU')} ₽
+- По категориям: ${Object.entries(stats.expenses.byCategory).map(([cat, amount]: any) => `${cat}: ${amount.toLocaleString('ru-RU')} ₽`).join(', ')}
+
+Финансы:
+- Общий доход (завершённые тендеры): ${stats.financial.totalIncome.toLocaleString('ru-RU')} ₽
+- Общие расходы: ${stats.financial.totalExpenses.toLocaleString('ru-RU')} ₽
+- Валовая прибыль: ${stats.financial.grossProfit.toLocaleString('ru-RU')} ₽
+- Налог УСН (7%): ${stats.financial.tax.toLocaleString('ru-RU')} ₽
+- Чистая прибыль: ${stats.financial.netProfit.toLocaleString('ru-RU')} ₽`;
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки контекста:', error);
+        }
+
+        // Добавляем контекст к первому сообщению пользователя
+        const messagesWithContext = [...messages, userMessage].map((m, index) => {
+          if (index === messages.length && contextMessage) {
+            return { role: m.role, content: m.content + contextMessage };
+          }
+          return { role: m.role, content: m.content };
+        });
+
+        // Локально - используем API роут с выбранным провайдером
         const response = await fetch('/api/ai-chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content }))
+            messages: messagesWithContext,
+            provider: selectedProvider,
+            model: selectedProvider === 'intelligence' ? selectedModel : undefined
           }),
         });
 
@@ -79,6 +162,32 @@ export default function AIPage() {
 
         const data = await response.json();
         aiResponseText = data.message;
+
+        // Парсим команды из ответа AI
+        const actionMatch = aiResponseText.match(/\[ACTION:(ADD_TENDER|ADD_EXPENSE|ADD_SUPPLIER)\]([\s\S]*?)\[\/ACTION\]/);
+        let parsedAction = undefined;
+        
+        if (actionMatch) {
+          try {
+            const actionType = actionMatch[1] as 'ADD_TENDER' | 'ADD_EXPENSE' | 'ADD_SUPPLIER';
+            const actionData = JSON.parse(actionMatch[2].trim());
+            parsedAction = { type: actionType, data: actionData };
+            
+            // Убираем команду из текста ответа
+            aiResponseText = aiResponseText.replace(actionMatch[0], '').trim();
+          } catch (e) {
+            console.error('Ошибка парсинга команды:', e);
+          }
+        }
+
+        const aiMessage: AIMessage = {
+          role: 'assistant',
+          content: aiResponseText,
+          timestamp: new Date().toISOString(),
+          action: parsedAction,
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
       } else {
         // На GitHub Pages - вызываем Google Gemini напрямую
         const apiKey = 'AIzaSyB4q--whZbW0GpezMXfJncEQibZayhRbaA';
@@ -119,15 +228,16 @@ export default function AIPage() {
 
         const data = await response.json();
         aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Извините, не удалось получить ответ.';
+        
+        const aiMessage: AIMessage = {
+          role: 'assistant',
+          content: aiResponseText,
+          timestamp: new Date().toISOString(),
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
       }
       
-      const aiMessage: AIMessage = {
-        role: 'assistant',
-        content: aiResponseText,
-        timestamp: new Date().toISOString(),
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
       await logActivity('Получен ответ от ИИ-помощника', ACTION_TYPES.LOGIN);
     } catch (error: any) {
       console.error('Ошибка:', error);
@@ -140,6 +250,40 @@ export default function AIPage() {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Выполнение действия AI
+  const handleExecuteAction = async (action: { type: string; data: any }) => {
+    try {
+      const response = await fetch('/api/ai-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action.type, data: action.data }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Добавляем сообщение об успехе
+        const successMessage: AIMessage = {
+          role: 'assistant',
+          content: `✅ ${result.message}`,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, successMessage]);
+        
+        await logActivity(`AI выполнил действие: ${action.type}`, ACTION_TYPES.TENDER_ADD);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error: any) {
+      const errorMessage: AIMessage = {
+        role: 'assistant',
+        content: `❌ Ошибка выполнения: ${error.message}`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
@@ -200,16 +344,58 @@ export default function AIPage() {
             <p className="text-sm text-gray-600 mt-1">Задайте любой вопрос и получите ответ</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleClearHistory}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-          disabled={messages.length === 0}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Очистить историю
-        </Button>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          {/* Вкладки провайдеров */}
+          <div className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg border">
+            <button
+              onClick={() => setSelectedProvider('google')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                selectedProvider === 'google'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Google AI
+            </button>
+            <button
+              onClick={() => setSelectedProvider('intelligence')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                selectedProvider === 'intelligence'
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Intelligence.io
+            </button>
+          </div>
+
+          {/* Выбор модели для Intelligence.io */}
+          {selectedProvider === 'intelligence' && (
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="text-sm px-3 py-2 border rounded-lg bg-white min-w-[200px]"
+            >
+              {intelligenceModels.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          )}
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearHistory}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            disabled={messages.length === 0}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Очистить
+          </Button>
+        </div>
       </div>
 
       {/* Окно чата */}
@@ -246,8 +432,19 @@ export default function AIPage() {
                   </p>
                 </div>
                 
+                {/* Кнопка подтверждения действия */}
+                {message.role === 'assistant' && message.action && (
+                  <Button
+                    onClick={() => handleExecuteAction(message.action!)}
+                    className="mt-2 bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    ✓ Подтвердить и выполнить
+                  </Button>
+                )}
+                
                 {/* Кнопка "Отправить в чат" только для ответов ИИ */}
-                {message.role === 'assistant' && (
+                {message.role === 'assistant' && !message.action && (
                   <Button
                     variant="ghost"
                     size="sm"
