@@ -27,6 +27,7 @@ export function AddTenderDialog({
 }: AddTenderDialogProps) {
   const [formData, setFormData] = useState<TenderInsert>({
     name: '',
+    purchase_number: '',
     link: '',
     region: '',
     publication_date: '',
@@ -51,6 +52,7 @@ export function AddTenderDialog({
     // Сброс формы
     setFormData({
       name: '',
+      purchase_number: '',
       link: '',
       region: '',
       publication_date: new Date().toISOString().split('T')[0],
@@ -85,6 +87,18 @@ export function AddTenderDialog({
                 }
                 placeholder="Введите название тендера"
                 required
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="purchase_number">Номер гос закупки</Label>
+              <Input
+                id="purchase_number"
+                value={formData.purchase_number || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, purchase_number: e.target.value })
+                }
+                placeholder="№ 0123456789012345678901"
               />
             </div>
 

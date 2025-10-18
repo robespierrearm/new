@@ -9,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Tender {
   id: number;
   name: string;
+  purchase_number: string | null; // Номер гос закупки
   link: string | null;
   region: string | null; // Регион / Адрес
   publication_date: string;

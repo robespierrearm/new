@@ -74,6 +74,7 @@ function TendersContent() {
   const handleAddTender = async (tender: TenderInsert) => {
     const payload = {
       ...tender,
+      purchase_number: tender.purchase_number || null,
       link: tender.link || null,
       submission_date: tender.submission_date || null,
       submission_deadline: tender.submission_deadline || null,

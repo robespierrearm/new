@@ -79,6 +79,18 @@ export function EditTenderDialog({
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="edit-purchase_number">Номер гос закупки</Label>
+              <Input
+                id="edit-purchase_number"
+                value={formData.purchase_number || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, purchase_number: e.target.value })
+                }
+                placeholder="№ 0123456789012345678901"
+              />
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="edit-link">Ссылка на тендер</Label>
               <Input
                 id="edit-link"

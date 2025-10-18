@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Tender, DocumentType, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { MapPin, ExternalLink, BarChart3, FileText, Receipt, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, ExternalLink, BarChart3, FileText, Receipt, ChevronDown, ChevronUp, Hash, TrendingDown } from 'lucide-react';
 import { TenderDocumentsModal } from '@/components/TenderDocumentsModal';
 import { TenderFinancialModal } from '@/components/TenderFinancialModal';
 
@@ -80,11 +80,61 @@ export function TenderCardExpanded({ tender, isExpanded, onToggle }: TenderCardE
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  // Расчёт снижения цены
+  const calculateReduction = () => {
+    if (!tender.start_price || !tender.submitted_price) return null;
+    
+    const reduction = tender.start_price - tender.submitted_price;
+    const percentage = (reduction / tender.start_price) * 100;
+    
+    return {
+      amount: reduction,
+      percentage: percentage,
+    };
+  };
+
+  const reduction = calculateReduction();
+
+  // Форматирование суммы
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <>
       {/* Раскрывающееся содержимое */}
       {isExpanded && (
         <div className="border-t bg-gray-50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          {/* Номер гос закупки и снижение */}
+          {(tender.purchase_number || reduction) && (
+            <div className="flex flex-wrap gap-2">
+              {/* Номер гос закупки */}
+              {tender.purchase_number && (
+                <div className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md border border-blue-200">
+                  <Hash className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">№ {tender.purchase_number}</span>
+                </div>
+              )}
+
+              {/* Снижение цены */}
+              {reduction && (
+                <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200">
+                  <TrendingDown className="h-3.5 w-3.5" />
+                  <span className="text-xs font-semibold">
+                    {formatAmount(reduction.amount)}
+                  </span>
+                  <span className="text-xs opacity-75">
+                    ({reduction.percentage.toFixed(1)}%)
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Регион / Адрес */}
           {tender.region && (
             <div className="bg-white p-4 rounded-lg border">
